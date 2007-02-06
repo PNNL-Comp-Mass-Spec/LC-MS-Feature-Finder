@@ -1,0 +1,4 @@
+Peptide Hit Results Processor Revision History
+
+Version 1.0.2592; February 5, 2007
+	- Initial release version
