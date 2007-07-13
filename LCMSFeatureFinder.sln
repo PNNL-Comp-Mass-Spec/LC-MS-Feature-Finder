@@ -7,6 +7,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UMCCreation", "UMCCreationD
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "LCMSFeatureFinder_Installer", "LCMSFeatureFinder_Installer\LCMSFeatureFinder_Installer.vdproj", "{4C7DF41D-E476-4CA9-9D98-220D0AF10372}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
@@ -21,6 +25,8 @@ Global
 		{8A102398-56CC-4AEE-A09C-B98741CB6ECA}.Debug.Build.0 = Debug|Win32
 		{8A102398-56CC-4AEE-A09C-B98741CB6ECA}.Release.ActiveCfg = Release|Win32
 		{8A102398-56CC-4AEE-A09C-B98741CB6ECA}.Release.Build.0 = Release|Win32
+		{4C7DF41D-E476-4CA9-9D98-220D0AF10372}.Debug.ActiveCfg = Debug
+		{4C7DF41D-E476-4CA9-9D98-220D0AF10372}.Release.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection

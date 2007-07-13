@@ -25,11 +25,13 @@ Option Strict On
 ' this computer software.
 
 '
-' Last modified February 8, 2005
+' Last modified February 20, 2007
 
 Public Class clsParseCommandLine
 
-    Private htSwitches As Hashtable
+    Private mSwitches As Hashtable
+    Private mNonSwitchParameters() As String
+
     Private mShowHelp As Boolean
 
     Public ReadOnly Property NeedToShowHelp() As Boolean
@@ -40,10 +42,20 @@ Public Class clsParseCommandLine
 
     Public ReadOnly Property ParameterCount() As Integer
         Get
-            If Not htSwitches Is Nothing Then
-                Return htSwitches.Count
-            Else
+            If mSwitches Is Nothing Then
                 Return 0
+            Else
+                Return mSwitches.Count
+            End If
+        End Get
+    End Property
+
+    Public ReadOnly Property NonSwitchParameterCount() As Integer
+        Get
+            If mNonSwitchParameters Is Nothing Then
+                Return 0
+            Else
+                Return mNonSwitchParameters.Length
             End If
         End Get
     End Property
@@ -55,7 +67,7 @@ Public Class clsParseCommandLine
         Dim blnMatchFound As Boolean
 
         Try
-            Dim iEnum As System.Collections.IDictionaryEnumerator = htSwitches.GetEnumerator()
+            Dim iEnum As System.Collections.IDictionaryEnumerator = mSwitches.GetEnumerator()
 
             Do While iEnum.MoveNext()
                 blnMatchFound = False
@@ -91,11 +103,15 @@ Public Class clsParseCommandLine
         Dim strCmdLine As String
         Dim strKey As String, strValue As String
         Dim intCharLoc As Integer
+        Dim intNonSwitchParameterCount As Integer
 
         Dim intIndex As Integer
         Dim strParameters() As String
 
-        htSwitches = New Hashtable
+        mSwitches = New Hashtable
+
+        intNonSwitchParameterCount = 0
+        ReDim mNonSwitchParameters(9)
 
         Try
             Try
@@ -116,13 +132,13 @@ Public Class clsParseCommandLine
             End If
 
             ' Parse the command line
-            htSwitches.Clear()
+            mSwitches.Clear()
 
             ' Note that strParameters(0) is the path to the Executable for the calling program
             For intIndex = 1 To strParameters.Length - 1
 
-                ' Look for strSwitchParameterChar in strParameters(intIndex)
                 If strParameters(intIndex).Length > 0 Then
+                    ' Look for strSwitchParameterChar in strParameters(intIndex)
                     intCharLoc = strParameters(intIndex).IndexOf(strSwitchParameterChar)
 
                     strKey = strParameters(intIndex)
@@ -132,30 +148,62 @@ Public Class clsParseCommandLine
                         strValue = strKey.Substring(intCharLoc + 1).Trim
 
                         ' Remove any starting and ending quotation marks
-                        strValue = strValue.TrimStart(""""c)
-                        strValue = strValue.TrimEnd(""""c)
+                        strValue = strValue.Trim(""""c)
 
                         strKey = strKey.Substring(0, intCharLoc)
+
+                        If strKey.Substring(0, 1) = "-" Or strKey.Substring(0, 1) = "/" Then
+                            strKey = strKey.Substring(1)
+                        End If
+                        strKey = strKey.Trim
+
+                        ' Note: .Item() will add strKey if it doesn't exist (which is normally the case)
+                        mSwitches.Item(strKey) = strValue
+                    Else
+                        ' Non-switch parameter since strSwitchParameterChar was not found
+
+                        ' Remove any starting and ending quotation marks
+                        strKey = strKey.Trim(""""c)
+
+                        If intNonSwitchParameterCount >= mNonSwitchParameters.Length Then
+                            ReDim Preserve mNonSwitchParameters(mNonSwitchParameters.Length * 2 - 1)
+                        End If
+                        mNonSwitchParameters(intNonSwitchParameterCount) = String.Copy(strKey)
+                        intNonSwitchParameterCount += 1
                     End If
 
-                    If strKey.Substring(0, 1) = "-" Or strKey.Substring(0, 1) = "/" Then
-                        strKey = strKey.Substring(1)
-                    End If
-                    strKey = strKey.Trim
-
-                    ' Note: .Item() will add strKey if it doesn't exist (which is normally the case)
-                    htSwitches.Item(strKey) = strValue
                 End If
             Next intIndex
 
-            If htSwitches.Count > 0 Then
-                Return True
-            Else
-                Return False
-            End If
         Catch ex As System.Exception
             Throw New System.Exception("Error in ParseCommandLine", ex)
+        Finally
+            If intNonSwitchParameterCount < 0 Then intNonSwitchParameterCount = 0
+            ReDim Preserve mNonSwitchParameters(intNonSwitchParameterCount - 1)
         End Try
+
+        If mSwitches.Count + intNonSwitchParameterCount > 0 Then
+            Return True
+        Else
+            Return False
+        End If
+
+    End Function
+
+    Public Function RetrieveNonSwitchParameter(ByVal intParameterIndex As Integer) As String
+        Dim strValue As String
+
+        If Not mNonSwitchParameters Is Nothing Then
+            If intParameterIndex < mNonSwitchParameters.Length Then
+                strValue = mNonSwitchParameters(intParameterIndex)
+            End If
+        End If
+
+        If strValue Is Nothing Then
+            strValue = String.Empty
+        End If
+
+        Return strValue
 
     End Function
 
@@ -167,8 +215,8 @@ Public Class clsParseCommandLine
         Try
             strKey = ""
             strValue = ""
-            If intParameterIndex < htSwitches.Count Then
-                Dim iEnum As System.Collections.IDictionaryEnumerator = htSwitches.GetEnumerator()
+            If intParameterIndex < mSwitches.Count Then
+                Dim iEnum As System.Collections.IDictionaryEnumerator = mSwitches.GetEnumerator()
 
                 intIndex = 0
                 Do While iEnum.MoveNext()
@@ -194,18 +242,18 @@ Public Class clsParseCommandLine
         Try
             strValue = ""
             If blnCaseSensitive Then
-                If htSwitches.ContainsKey(strKey) Then
-                    strValue = CStr(htSwitches(strKey))
+                If mSwitches.ContainsKey(strKey) Then
+                    strValue = CStr(mSwitches(strKey))
                     Return True
                 Else
                     Return False
                 End If
             Else
-                Dim iEnum As System.Collections.IDictionaryEnumerator = htSwitches.GetEnumerator()
+                Dim iEnum As System.Collections.IDictionaryEnumerator = mSwitches.GetEnumerator()
 
                 Do While iEnum.MoveNext()
                     If CStr(iEnum.Key).ToUpper = strKey.ToUpper Then
-                        strValue = CStr(htSwitches(iEnum.Key))
+                        strValue = CStr(mSwitches(iEnum.Key))
                         Return True
                     End If
                 Loop
