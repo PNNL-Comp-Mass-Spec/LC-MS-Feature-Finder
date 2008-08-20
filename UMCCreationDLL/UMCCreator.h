@@ -16,6 +16,7 @@ class UMCCreator
 	float mflt_wt_scan ; 
 	float mflt_wt_net ; 
 	float mflt_wt_fit ; 
+	float mflt_wt_ims_drift_time ;
 
 	float mflt_constraint_mono_mass ; 
 	bool mbln_constraint_mono_mass_is_ppm ;
@@ -79,6 +80,9 @@ public:
 
 		sqrDist += (a.mflt_fit - b.mflt_fit) * (a.mflt_fit - b.mflt_fit) * mflt_wt_fit * mflt_wt_fit ; 
 
+		// IMS Drift time
+		sqrDist += (a.mflt_ims_drift_time - b.mflt_ims_drift_time) * (a.mflt_ims_drift_time - b.mflt_ims_drift_time) * mflt_wt_ims_drift_time * mflt_wt_ims_drift_time ; 
+
 		return sqrt(sqrDist) ; 
 
 	}
@@ -97,7 +101,7 @@ public:
 
 	// This function enables the default constraints and assumes ppm units for the mass constraints
 	void SetOptions(float wt_mono_mass, float wt_avg_mass, float wt_log_abundance, float wt_scan, float wt_fit,
-		float wt_net, float mono_constraint, float avg_constraint, double max_dist, bool use_net)
+		float wt_net, float mono_constraint, float avg_constraint, double max_dist, bool use_net, float wt_ims_drift_time)
 	{
 		mflt_wt_mono_mass = wt_mono_mass; 
 		mflt_constraint_mono_mass = mono_constraint ; 
@@ -111,6 +115,7 @@ public:
 		mflt_wt_scan = wt_scan ; 
 		mflt_wt_net = wt_net ; 
 		mflt_wt_fit = wt_fit ;
+		mflt_wt_ims_drift_time = wt_ims_drift_time ;
 
 		mdbl_max_distance = max_dist ; 
 		mbln_use_net = use_net ;
@@ -121,7 +126,7 @@ public:
 			float wt_mono_mass, float mono_constraint, bool mono_constraint_is_ppm,
 			float wt_avg_mass, float avg_constraint, bool avg_constraint_is_ppm,
 			float wt_log_abundance, float wt_scan, float wt_net, float wt_fit,
-			double max_dist, bool use_net)
+			double max_dist, bool use_net, float wt_ims_drift_time)
 	{
 		mflt_wt_mono_mass = wt_mono_mass; 
 		mflt_constraint_mono_mass = mono_constraint ; 
@@ -135,6 +140,7 @@ public:
 		mflt_wt_scan = wt_scan ; 
 		mflt_wt_net = wt_net ; 
 		mflt_wt_fit = wt_fit ;
+		mflt_wt_ims_drift_time = wt_ims_drift_time ;
 
 		mdbl_max_distance = max_dist ; 
 		mbln_use_net = use_net ;

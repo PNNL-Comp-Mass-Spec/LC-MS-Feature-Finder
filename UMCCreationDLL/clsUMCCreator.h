@@ -20,6 +20,7 @@ namespace UMCCreation
 		double mdbl_mono_mass ; 
 		double mdbl_max_abundance_mass ;
 		double mdbl_i2_abundance ; 
+		float mflt_ims_drift_time ;
 	} ; 
 
 	public __value enum enmStatus { IDLE = 0, LOADING, CLUSTERING, SUMMARIZING, FAILED, COMPLETE } ; 
@@ -49,13 +50,13 @@ namespace UMCCreation
 
 		void SetMinMaxScans(int min, int max) ; 
 		void SetOptions(float wt_mono_mass, float wt_avg_mass, float wt_log_abundance, float wt_scan, float wt_fit,
-			float wt_net, float mono_constraint, float avg_constraint, double max_dist, bool use_net) ; 
+			float wt_net, float mono_constraint, float avg_constraint, double max_dist, bool use_net, float wt_ims_drift_time) ; 
 
 		void SetOptionsEx(
 				float wt_mono_mass, float mono_constraint, bool mono_constraint_is_ppm,
 				float wt_avg_mass, float avg_constraint, bool avg_constraint_is_ppm,
 				float wt_log_abundance, float wt_scan, float wt_net, float wt_fit,
-				double max_dist, bool use_net) ;
+				double max_dist, bool use_net, float wt_ims_drift_time) ;
 
 		UMCManipulation::clsUMC* GetUMCs()[] ; 
 

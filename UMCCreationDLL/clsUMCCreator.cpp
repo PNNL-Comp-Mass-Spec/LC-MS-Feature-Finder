@@ -172,6 +172,7 @@ namespace UMCCreation
 			pk.mdbl_abundance = isoPk->mdbl_abundance ; 
 			pk.mdbl_mz = isoPk->mdbl_mz ; 
 			pk.mflt_fit = isoPk->mflt_fit ; 
+			pk.mflt_ims_drift_time = isoPk->mflt_ims_drift_time ;
 			pk.mdbl_average_mass = isoPk->mdbl_average_mass ; 
 			pk.mdbl_mono_mass = isoPk->mdbl_mono_mass ; 
 			pk.mdbl_max_abundance_mass = isoPk->mdbl_max_abundance_mass ;
@@ -182,23 +183,23 @@ namespace UMCCreation
 		mobj_umc_creator->SetPeks(vectPeaks) ; 
 	}
 	void clsUMCCreator::SetOptions(float wt_mono_mass, float wt_avg_mass, float wt_log_abundance, float wt_scan, float wt_fit,
-			float wt_net, float mono_constraint, float avg_constraint, double max_dist, bool use_net)
+			float wt_net, float mono_constraint, float avg_constraint, double max_dist, bool use_net, float wt_ims_drift_time)
 	{
 		mobj_umc_creator->SetOptions(wt_mono_mass, wt_avg_mass, wt_log_abundance, wt_scan, wt_fit, wt_net, 
-			mono_constraint, avg_constraint, max_dist, use_net) ; 
+			mono_constraint, avg_constraint, max_dist, use_net, wt_ims_drift_time) ; 
 	}
 
 	void clsUMCCreator::SetOptionsEx(
 					float wt_mono_mass, float mono_constraint, bool mono_constraint_is_ppm,
 					float wt_avg_mass, float avg_constraint, bool avg_constraint_is_ppm,
 					float wt_log_abundance, float wt_scan, float wt_net, float wt_fit,
-					double max_dist, bool use_net)
+					double max_dist, bool use_net, float wt_ims_drift_time)
 	{
 		mobj_umc_creator->SetOptionsEx(
 					wt_mono_mass, mono_constraint, mono_constraint_is_ppm,
 					wt_avg_mass, avg_constraint, avg_constraint_is_ppm,
 					wt_log_abundance, wt_scan, wt_net, wt_fit, 
-					max_dist, use_net) ;
+					max_dist, use_net, wt_ims_drift_time) ;
 	}
 
 }

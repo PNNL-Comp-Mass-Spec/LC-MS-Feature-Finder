@@ -15,6 +15,8 @@ public:
 	double mdbl_max_abundance_mass ;
 	double mdbl_i2_abundance ; 
 	double mdbl_mono_abundance ; 
+	float mflt_ims_drift_time ;
+
 	IsotopePeak(void);
 	~IsotopePeak(void);
 };

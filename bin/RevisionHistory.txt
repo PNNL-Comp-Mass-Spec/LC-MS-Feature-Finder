@@ -1,4 +1,9 @@
 LCMS Feature Finder Revision History
 
+Version 1.0.3147; August 15, 2008
+	- Expanded to support IMS Drift time
+		- Use IMSDriftTimeWeight in the .Ini file to specify the weight for the IMS dimension
+		- Add column ims_drift_time to the input file to specify the IMS drift time for each data point
+
 Version 1.0.2592; February 5, 2007
 	- Initial release version

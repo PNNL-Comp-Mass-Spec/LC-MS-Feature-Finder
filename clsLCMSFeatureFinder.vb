@@ -56,7 +56,7 @@ Public Class clsLCMSFeatureFinder
         UnspecifiedError = -1
     End Enum
 
-    Protected Const INPUT_FILE_COLUMN_NAME_COUNT As Integer = 14
+    Protected Const INPUT_FILE_COLUMN_NAME_COUNT As Integer = 15
     Protected Enum eInputFileColumnNames
         Scan = 0
         Charge = 1
@@ -72,6 +72,7 @@ Public Class clsLCMSFeatureFinder
         MonoMassPlus2DaAbundance = 11
         Index = 12
         NET = 13
+        IMSDriftTime = 14
     End Enum
 
     ' Note: These should all be lowercase string values
@@ -89,6 +90,7 @@ Public Class clsLCMSFeatureFinder
     Protected Const ISOS_COLUMN_MONO_PLUS2_ABUNDANCE As String = "mono_plus2_abundance"
     Protected Const ISOS_COLUMN_INDEX As String = "index"           ' Index of the data point in the source application
     Protected Const ISOS_COLUMN_NET As String = "net"               ' Normalized elution time
+    Protected Const ISOS_COLUMN_IMS_DRIFT_TIME As String = "ims_drift_time"
 
     Protected Const INI_SECTION_UMC_CREATION_OPTIONS As String = "UMCCreationOptions"
     Protected Enum eIniFileSectionConstants
@@ -112,6 +114,7 @@ Public Class clsLCMSFeatureFinder
         Public ScanWeight As Single         ' Used if .UseGenericNET is False
         Public NETWeight As Single          ' Used if .UseGenericNET is True
         Public FitWeight As Single
+        Public IMSDriftTimeWeight As Single
 
         Public MaxDistance As Single
         Public UseGenericNET As Boolean
@@ -201,7 +204,8 @@ Public Class clsLCMSFeatureFinder
                                     ByVal dblMassOfMostAbundant As Double, _
                                     ByVal dblMZOfMostAbu As Double, _
                                     ByVal intCharge As Short, _
-                                    ByVal sngFit As Single) As Boolean
+                                    ByVal sngFit As Single, _
+                                    ByVal sngIMSDriftTime As Single) As Boolean
 
         If mIsotopePeaks Is Nothing Then ClearIsotopePeaks()
 
@@ -230,6 +234,7 @@ Public Class clsLCMSFeatureFinder
             .mshort_charge = intCharge
 
             .mflt_fit = sngFit
+            .mflt_ims_drift_time = sngIMSDriftTime
         End With
         mIsotopePeaksCount += 1
 
@@ -270,6 +275,7 @@ Public Class clsLCMSFeatureFinder
                         .ScanWeight = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "ScanWeight", .ScanWeight)
                         .NETWeight = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "NETWeight", .NETWeight)
                         .FitWeight = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "FitWeight", .FitWeight)
+                        .IMSDriftTimeWeight = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "IMSDriftTimeWeight", .IMSDriftTimeWeight)
 
                         .MaxDistance = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "MaxDistance", .MaxDistance)
                         .UseGenericNET = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "UseGenericNET", .UseGenericNET)
@@ -327,7 +333,7 @@ Public Class clsLCMSFeatureFinder
         Dim dblMZOfMostAbu As Double
         Dim intCharge As Short
         Dim sngFit As Single
-
+        Dim sngIMSDriftTime As Single
 
         Dim blnColumnMappingDefined As Boolean
         Dim intColumnMapping() As Integer
@@ -408,10 +414,11 @@ Public Class clsLCMSFeatureFinder
                                 dblMZOfMostAbu = GetColumnValueSng(strSplitLine, intColumnMapping(eInputFileColumnNames.MZOfMostAbu), 0)
                                 intCharge = CShort(GetColumnValueInt(strSplitLine, intColumnMapping(eInputFileColumnNames.Charge), 1))
                                 sngFit = GetColumnValueSng(strSplitLine, intColumnMapping(eInputFileColumnNames.Fit), 0)
+                                sngIMSDriftTime = GetColumnValueSng(strSplitLine, intColumnMapping(eInputFileColumnNames.IMSDriftTime), 0)
 
                                 AddIsotopePeak(intScanNumber, intIndexInDataSource, dblAbundance, dblMonoMassPlus2DaAbundance, _
                                                dblMonoisotopicMass, dblAverageMass, dblMassOfMostAbundant, dblMZOfMostAbu, _
-                                               intCharge, sngFit)
+                                               intCharge, sngFit, sngIMSDriftTime)
 
                                 intDataLinesRead += 1
                             End If
@@ -566,7 +573,8 @@ Public Class clsLCMSFeatureFinder
                                 .NETWeight, _
                                 .FitWeight, _
                                 .MaxDistance, _
-                                .UseGenericNET)
+                                .UseGenericNET, _
+                                .IMSDriftTimeWeight)
 
                 mUMCCreator.MinUMCLength = .MinFeatureLengthPoints
 
@@ -859,6 +867,7 @@ Public Class clsLCMSFeatureFinder
         intColumnMapping(eInputFileColumnNames.MonoMassPlus2DaAbundance) = eInputFileColumnNames.MonoMassPlus2DaAbundance
         intColumnMapping(eInputFileColumnNames.Index) = eInputFileColumnNames.Index
         intColumnMapping(eInputFileColumnNames.NET) = eInputFileColumnNames.NET
+        intColumnMapping(eInputFileColumnNames.IMSDriftTime) = eInputFileColumnNames.IMSDriftTime
 
     End Sub
 
@@ -1032,6 +1041,8 @@ Public Class clsLCMSFeatureFinder
                             intColumnMapping(eInputFileColumnNames.Index) = CInt(objEnum.Value)
                         Case ISOS_COLUMN_NET
                             intColumnMapping(eInputFileColumnNames.NET) = CInt(objEnum.Value)
+                        Case ISOS_COLUMN_IMS_DRIFT_TIME
+                            intColumnMapping(eInputFileColumnNames.IMSDriftTime) = CInt(objEnum.Value)
                         Case Else
                             ' Ignore this column (display a warning on the console)
                             Console.WriteLine("Ignoring column '" & strCurrentColumn & "' since the name is not recognized")
@@ -1285,6 +1296,7 @@ Public Class clsLCMSFeatureFinder
             .ScanWeight = 0.005         ' Used if .UseGenericNET = False
             .NETWeight = 15             ' Used if .UseGenericNET = True
             .FitWeight = 0.1
+            .IMSDriftTimeWeight = 0.1
 
             .MaxDistance = 0.1
             .UseGenericNET = True

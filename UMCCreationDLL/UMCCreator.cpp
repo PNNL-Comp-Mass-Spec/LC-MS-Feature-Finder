@@ -20,6 +20,7 @@ UMCCreator::UMCCreator(void)
 	mflt_wt_log_abundance = 0.1F ; 
 	mflt_wt_scan = 0.01F ; 
 	mflt_wt_fit = 0.1F ; 
+	mflt_wt_ims_drift_time = 0.1F ;
 
 	mflt_constraint_mono_mass = 10.0F ; // is in ppm
 	mflt_constraint_average_mass = 10.0F ; // is in ppm. 
@@ -72,6 +73,7 @@ void UMCCreator::ReadCSVFile(char *fileName)
 	pk.mdbl_mono_mass = 0 ; 
 	pk.mdbl_mz = 0 ; 
 	pk.mshort_charge = 0 ; 
+	pk.mflt_ims_drift_time = 0 ;
 
 	int mint_min_scan = INT_MAX ; 
 	int mint_max_scan = 0 ; 
@@ -98,6 +100,7 @@ void UMCCreator::ReadCSVFile(char *fileName)
 			mshort_percent_complete = 99 ; 
 		char *stopPtr ; 
 		char *stopPtrNext ; 
+
 		pk.mint_scan = strtol(buffer, &stopPtr, 10) ; 
 		stopPtr++ ; 
 		pk.mshort_charge = (short) strtol(stopPtr, &stopPtrNext, 10) ; 
@@ -123,6 +126,10 @@ void UMCCreator::ReadCSVFile(char *fileName)
 		pk.mdbl_i2_abundance = strtod(stopPtr, &stopPtrNext) ; 
 		stopPtr = ++stopPtrNext ; 
 		pk.mint_original_index = numPeaks ; 
+
+		// Note: this reader does not support reading IMS Drift time from CSV files
+		pk.mflt_ims_drift_time = 0 ;
+
 		mvect_isotope_peaks.push_back(pk) ; 
 		numPeaks++ ; 
 	}
@@ -455,6 +462,7 @@ void UMCCreator::ReadPekFileMemoryMapped(char *fileName)
 	pk.mdbl_mono_mass = 0 ; 
 	pk.mdbl_mz = 0 ; 
 	pk.mshort_charge = 0 ; 
+	pk.mflt_ims_drift_time = 0 ;
 
 	int mint_min_scan = INT_MAX ; 
 	int mint_max_scan = 0 ; 
@@ -485,7 +493,7 @@ void UMCCreator::ReadPekFileMemoryMapped(char *fileName)
 				index-- ; 
 			}
 			index++ ; 
-			// wiff file pek files have a wierd format. Another ICR2LS-ism.
+			// wiff file pek files have a weird format. Another ICR2LS-ism.
 			if (is_first_scan)
 			{
 				if(_strnicmp(&headerBuffer[index], "wiff", 4) ==0)
@@ -497,6 +505,7 @@ void UMCCreator::ReadPekFileMemoryMapped(char *fileName)
 					mflt_wt_log_abundance = 0.1F ; 
 					mflt_wt_scan = 0.01F ; 
 					mflt_wt_fit = 0.1F ; 
+					mflt_wt_ims_drift_time = 0.1F ;
 
 					mflt_constraint_mono_mass = 25.0F ; // is in ppm
 					mflt_constraint_average_mass = 25.0F ; // is in ppm. 
@@ -559,6 +568,8 @@ void UMCCreator::ReadPekFileMemoryMapped(char *fileName)
 				stopPtr = stopPtrNext ; 
 				pk.mdbl_i2_abundance = strtod(stopPtr, &stopPtrNext) ; 
 				stopPtr = stopPtrNext ; 
+
+				pk.mflt_ims_drift_time = 0 ;
 			}
 			else
 			{
@@ -577,6 +588,8 @@ void UMCCreator::ReadPekFileMemoryMapped(char *fileName)
 				stopPtr = stopPtrNext ; 
 				pk.mdbl_max_abundance_mass = strtod(stopPtr, &stopPtrNext) ; 
 				stopPtr = stopPtrNext ; 
+
+				pk.mflt_ims_drift_time = 0 ;
 			}
 			pk.mint_original_index = numPeaks ; 
 			mvect_isotope_peaks.push_back(pk) ; 
@@ -626,6 +639,7 @@ void UMCCreator::ReadPekFile(char *fileName)
 	pk.mdbl_mono_mass = 0 ; 
 	pk.mdbl_mz = 0 ; 
 	pk.mshort_charge = 0 ; 
+	pk.mflt_ims_drift_time = 0 ;
 
 	mint_min_scan = INT_MAX ; 
 	mint_max_scan = 0 ; 
