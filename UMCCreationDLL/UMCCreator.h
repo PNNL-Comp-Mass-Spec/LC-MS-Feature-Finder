@@ -24,6 +24,8 @@ class UMCCreator
 	float mflt_constraint_average_mass ; 
 	bool mbln_constraint_average_mass_is_ppm ;
 
+	bool mbln_constraint_charge_state;
+
 	double mdbl_max_distance ; 
 	short mshort_percent_complete ; 
 	
@@ -44,6 +46,7 @@ public:
 	short GetPercentComplete() { return mshort_percent_complete ; } ; 
 	inline double PeakDistance(IsotopePeak &a, IsotopePeak &b) 
 	{
+		
 		if (mbln_constraint_mono_mass_is_ppm) {
 			if (a.mdbl_mono_mass > 0 && (abs((a.mdbl_mono_mass - b.mdbl_mono_mass) * mflt_wt_mono_mass / a.mdbl_mono_mass * 1000000) > mflt_constraint_mono_mass))
 				return DBL_MAX ; 
@@ -99,9 +102,16 @@ public:
 	void Reset() ; 
 	void SetUseNet(bool use) { mbln_use_net = use ; } ; 
 
+	//Functions added by Anuj Shah
+	void CreateUMCsSingleLinkedWithAllOnline();
+	void CreateUMCFromIsotopePeak(IsotopePeak startPeak, UMC &firstUMC);
+	void AddPeakToUMC (IsotopePeak peak, UMC &umc);
+	bool withinMassTolerance(double observedMass, double realMass);
+	int findCandidateUMCsForPeak(IsotopePeak peak, std::vector<UMC> &umcVector, std::vector<UMC> &candidateUMCs);
+
 	// This function enables the default constraints and assumes ppm units for the mass constraints
 	void SetOptions(float wt_mono_mass, float wt_avg_mass, float wt_log_abundance, float wt_scan, float wt_fit,
-		float wt_net, float mono_constraint, float avg_constraint, double max_dist, bool use_net, float wt_ims_drift_time)
+		float wt_net, float mono_constraint, float avg_constraint, double max_dist, bool use_net, float wt_ims_drift_time, bool use_cs)
 	{
 		mflt_wt_mono_mass = wt_mono_mass; 
 		mflt_constraint_mono_mass = mono_constraint ; 
@@ -119,6 +129,7 @@ public:
 
 		mdbl_max_distance = max_dist ; 
 		mbln_use_net = use_net ;
+		mbln_constraint_charge_state = true;
 	}
 
 	// This function allows one to specify the units for the constraints
@@ -126,7 +137,7 @@ public:
 			float wt_mono_mass, float mono_constraint, bool mono_constraint_is_ppm,
 			float wt_avg_mass, float avg_constraint, bool avg_constraint_is_ppm,
 			float wt_log_abundance, float wt_scan, float wt_net, float wt_fit,
-			double max_dist, bool use_net, float wt_ims_drift_time)
+			double max_dist, bool use_net, float wt_ims_drift_time, bool use_cs)
 	{
 		mflt_wt_mono_mass = wt_mono_mass; 
 		mflt_constraint_mono_mass = mono_constraint ; 
@@ -144,6 +155,8 @@ public:
 
 		mdbl_max_distance = max_dist ; 
 		mbln_use_net = use_net ;
+
+		mbln_constraint_charge_state = true;
 	}
 
 	void SetMinMaxScan(int minScan, int maxScan) { 

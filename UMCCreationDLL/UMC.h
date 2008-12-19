@@ -1,5 +1,5 @@
 #pragma once
-
+#include "IsotopePeak.h"
 class UMC
 {
 public:
@@ -20,6 +20,10 @@ public:
 	short mshort_class_rep_charge ; 
 
 	int mint_umc_index ; 
+
+	//Added by Anuj Shah to keep track of the last peak that belongs
+	//to this UMC
+	IsotopePeak lastPeak;
 
 	UMC(void);
 	~UMC(void);

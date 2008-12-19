@@ -3,6 +3,25 @@
 #include <stdlib.h> 
 #include <algorithm>
 #include <iostream> 
+#include <fstream>
+#include <cmath>
+#include <stddef.h>
+
+
+bool SortUMCsByMonoMassAndScan(UMC &a, UMC &b)
+{
+	if ( a.mdbl_average_mono_mass < b.mdbl_average_mono_mass){
+		return true;
+	}
+
+	if ( a.mdbl_average_mono_mass > b.mdbl_average_mono_mass){
+		return true;
+	}
+
+	return true;
+
+}
+
 
 bool SortIsotopesByMonoMassAndScan(IsotopePeak &a, IsotopePeak &b) 
 {
@@ -272,9 +291,190 @@ void UMCCreator::RemoveShortUMCs(int min_length)
 }
 
 
+
+void UMCCreator::AddPeakToUMC (IsotopePeak peak, UMC &umc){
+	
+	umc.mdbl_average_mono_mass = (umc.mdbl_average_mono_mass*umc.min_num_members + peak.mdbl_mono_mass)/(umc.min_num_members + 1);
+	umc.min_num_members++;
+	umc.mdbl_sum_abundance += peak.mdbl_abundance;
+	if (peak.mdbl_abundance > umc.mdbl_max_abundance){
+
+		umc.mdbl_max_abundance = peak.mdbl_abundance;
+		umc.mdbl_max_mono_mass = peak.mdbl_mono_mass;
+		umc.mint_max_abundance_scan = peak.mint_scan;
+		
+	}
+
+	umc.lastPeak = peak;
+
+	//we still have to calculate the representative charge and rep mzs values.
+
+}
+
+void UMCCreator::CreateUMCFromIsotopePeak(IsotopePeak startPeak, UMC &firstUMC){
+	firstUMC.mdbl_average_mono_mass = startPeak.mdbl_mono_mass;
+	firstUMC.mdbl_class_rep_mz = startPeak.mdbl_mz;
+	firstUMC.mdbl_max_abundance = startPeak.mdbl_abundance;
+	firstUMC.mdbl_median_mono_mass = startPeak.mdbl_mono_mass;
+	firstUMC.mdbl_min_mono_mass = startPeak.mdbl_mono_mass;
+	firstUMC.mdbl_sum_abundance = startPeak.mdbl_abundance;
+	firstUMC.min_num_members = 1;
+	firstUMC.mint_max_abundance_scan = startPeak.mint_scan;
+	firstUMC.mint_start_scan = startPeak.mint_scan;
+	firstUMC.mint_stop_scan = startPeak.mint_scan;
+	firstUMC.mshort_class_rep_charge = startPeak.mshort_charge;
+	firstUMC.lastPeak = startPeak;
+}
+
+bool UMCCreator::withinMassTolerance(double observedMass, double realMass){
+	double massDifferenceInPPM = abs(realMass - observedMass)* 1000000/realMass;
+	return ( massDifferenceInPPM <= mflt_constraint_mono_mass);
+}
+
+int UMCCreator::findCandidateUMCsForPeak(IsotopePeak peak, std::vector<UMC> &umcVector, std::vector<UMC> &candidateUMCs){
+	
+	int low = 0;
+	int high = umcVector.size()-1;
+	int mid;
+	int retValue = -1;
+
+	if ( umcVector.size() == 1)
+	{
+
+		//check if it's within the tolerance
+
+		if (withinMassTolerance(peak.mdbl_mono_mass, umcVector.at(0).mdbl_average_mono_mass)){
+			//that means that this peak belongs to this UMC
+			candidateUMCs.push_back(umcVector.at(0));
+			retValue = 1;
+		}
+	}
+	else{
+			//perform a binary search for the most appropriate UMC for this peak
+			while ( low <= high)
+			{
+				mid = (high + low)/2;
+				double trueMass = umcVector.at(mid).mdbl_average_mono_mass;
+				if ( withinMassTolerance(peak.mdbl_mono_mass,trueMass))
+				{
+					//this is the candidate UMC for this peak 
+					candidateUMCs.push_back(umcVector.at(mid));
+					//now keep moving to the left and check for matching mass UMCs
+					while (mid-1 > low && withinMassTolerance(umcVector.at(mid-1).mdbl_average_mono_mass, trueMass)){
+
+						//here you really want to insert in the front
+						candidateUMCs.push_back(umcVector.at(mid-1));
+						mid = mid  -1;
+					}
+
+					//and also move to the right and check for matching mass UMCs
+					while (mid+1 < high && withinMassTolerance(umcVector.at(mid+1).mdbl_average_mono_mass, trueMass)){
+						candidateUMCs.push_back(umcVector.at(mid+1));
+						mid = mid + 1;
+					}
+                    
+
+					retValue = 1;
+					break;
+				}
+				else if ( peak.mdbl_mono_mass < trueMass )
+				{
+					high = mid -1;
+				}
+				else
+				{
+					low = mid + 1;
+				}
+			}
+	}
+
+	return retValue;
+						
+}
+
+
+
+void UMCCreator::CreateUMCsSingleLinkedWithAllOnline(){
+	
+	std::vector<UMC>::iterator the_iterator;
+	int i = 1;
+	std::ofstream out("umcs.txt");
+	if (!out){
+		std::cout << "Could not create file \n";
+		return;
+	}
+	
+
+	//find total number of peaks that need to be clustered
+	int numPeaks = mvect_isotope_peaks.size();
+	mshort_percent_complete = 0;
+	sort(mvect_isotope_peaks.begin(), mvect_isotope_peaks.end(), &SortIsotopesByMonoMassAndScan) ; 
+	std::vector<UMC> sortedUMCVector;
+
+	IsotopePeak startPeak = mvect_isotope_peaks[0];
+
+	//first create an UMC for the first peak that comes into picture
+	UMC firstUMC;
+	CreateUMCFromIsotopePeak(startPeak, firstUMC);
+
+	//add that UMC to the list of UMCs we found
+	sortedUMCVector.push_back( firstUMC);
+
+	while (i < numPeaks){
+
+		//select individual peak;
+		IsotopePeak peak = mvect_isotope_peaks[i];
+
+		//find the list of candidate UMC's for this peak...
+		//we will use a binary search algorithm here... 
+		//that finds the UMC's that are possible based solely on 
+		//mass tolerance. If the chargeState separation is enabled then
+		//we have to use m/z values.
+		std::vector<UMC> candidateUMCs;
+		bool assigned = false;
+		if (findCandidateUMCsForPeak(peak, sortedUMCVector, candidateUMCs) != -1 ){
+			//that means we've found a candidate UMC for our peak
+			//find the distance between the current peak and the last peak in the candidate UMC
+		
+			the_iterator = candidateUMCs.begin();
+			
+			while( the_iterator != candidateUMCs.end() ) {
+				double currentDistance = PeakDistance(peak, (*the_iterator).lastPeak) ; 	
+				if (currentDistance < mdbl_max_distance){
+					//then the peak can be added to our UMC 
+					AddPeakToUMC(peak, *the_iterator);
+					//move on to the next peak
+					assigned = true;
+					break;
+				}
+				the_iterator++;
+			}	
+			
+		}
+
+		if (!assigned){
+					//if we didn't identify any candidate UMC's for our peak
+					//that means we create a new UMC from our peak and add that 
+					//to our list of UMC's
+					UMC newUMC;
+	
+					CreateUMCFromIsotopePeak(peak, newUMC);
+					sortedUMCVector.push_back(newUMC);
+					out << newUMC.mdbl_average_mono_mass << std::endl;
+
+					//sort(sortedUMCVector.begin(), sortedUMCVector.end(), &SortUMCsByMonoMassAndScan) ;
+	
+		}
+		i++;
+	}
+
+	out.close();
+
+}
+
 void UMCCreator::CreateUMCsSinglyLinkedWithAll()
 {
-
+	bool chargeStateMatch = true;
 	mshort_percent_complete = 0 ; 
 	mmultimap_umc_2_peak_index.clear() ; 
 	int numPeaks = mvect_isotope_peaks.size() ; 
@@ -340,7 +540,10 @@ void UMCCreator::CreateUMCsSinglyLinkedWithAll()
 			if (matchPeak.mint_umc_index != currentPeak.mint_umc_index)
 			{		
 				currentDistance = PeakDistance(currentPeak, matchPeak) ; 
-				if (currentDistance < mdbl_max_distance)
+				if (mbln_constraint_charge_state){
+						chargeStateMatch = (currentPeak.mshort_charge == matchPeak.mshort_charge);
+					}
+				if (currentDistance < mdbl_max_distance && chargeStateMatch)
 				{
 					if (matchPeak.mint_umc_index == -1)
 					{
@@ -382,34 +585,8 @@ void UMCCreator::CreateUMCsSinglyLinkedWithAll()
 		currentIndex++ ; 
 	}
 
-	// At the end of all of this. The mapping from mmultimap_umc_2_peak_index is from umc_index to index in sorted stuff. 
-	// Also, several of the umc indices are no longer valid. So lets step through the map, get new umc indices, renumber them,
-	// and set the umc indices in the original vectors.
-	numUmcsSoFar = 0 ; 
-	for (std::multimap<int,int>::iterator iter = mmultimap_umc_2_peak_index.begin() ; iter != mmultimap_umc_2_peak_index.end() ; )
-	{
-		int currentOldUmcNum = (*iter).first ; 
-		int numMembers = 0 ; 
-		while(iter != mmultimap_umc_2_peak_index.end() && (*iter).first == currentOldUmcNum)
-		{
-			IsotopePeak pk = vectTempPeaks[(*iter).second] ; 
-			mvect_isotope_peaks[pk.mint_original_index].mint_umc_index = numUmcsSoFar ; 
-			iter++ ; 
-			numMembers++ ; 
-		}
-		mvect_umc_num_members.push_back(numMembers) ; 
-		numUmcsSoFar++ ; 
 	}
-	// now set the map object. 
-	mmultimap_umc_2_peak_index.clear() ; 
-	for (int pkNum = 0 ; pkNum < numPeaks ; pkNum++)
-	{
-		IsotopePeak pk = mvect_isotope_peaks[pkNum] ; 
-		mmultimap_umc_2_peak_index.insert(std::pair<int,int>(pk.mint_umc_index, pkNum)) ; 
-	}
-	// DONE!! 
-}
-
+	
 void UMCCreator::SetPeks(std::vector<IsotopePeak> &vectPks)
 {
 	mvect_isotope_peaks.clear() ; 

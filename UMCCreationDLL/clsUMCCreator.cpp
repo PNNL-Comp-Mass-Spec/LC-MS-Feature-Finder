@@ -42,7 +42,7 @@ namespace UMCCreation
 	{
 		menm_status = CLUSTERING ; 
 		mstr_message = new System::String("Clustering Isotope Peaks") ; 
-		mobj_umc_creator->CreateUMCsSinglyLinkedWithAll() ; 
+		mobj_umc_creator->CreateUMCsSinglyLinkedWithAll(); 
 		menm_status = SUMMARIZING ; 
 		mstr_message = new System::String("Filtering out short clusters") ; 
 		mobj_umc_creator->RemoveShortUMCs(mint_min_umc_length) ;
@@ -183,23 +183,23 @@ namespace UMCCreation
 		mobj_umc_creator->SetPeks(vectPeaks) ; 
 	}
 	void clsUMCCreator::SetOptions(float wt_mono_mass, float wt_avg_mass, float wt_log_abundance, float wt_scan, float wt_fit,
-			float wt_net, float mono_constraint, float avg_constraint, double max_dist, bool use_net, float wt_ims_drift_time)
+			float wt_net, float mono_constraint, float avg_constraint, double max_dist, bool use_net, float wt_ims_drift_time, bool use_cs)
 	{
 		mobj_umc_creator->SetOptions(wt_mono_mass, wt_avg_mass, wt_log_abundance, wt_scan, wt_fit, wt_net, 
-			mono_constraint, avg_constraint, max_dist, use_net, wt_ims_drift_time) ; 
+			mono_constraint, avg_constraint, max_dist, use_net, wt_ims_drift_time, use_cs) ; 
 	}
 
 	void clsUMCCreator::SetOptionsEx(
 					float wt_mono_mass, float mono_constraint, bool mono_constraint_is_ppm,
 					float wt_avg_mass, float avg_constraint, bool avg_constraint_is_ppm,
 					float wt_log_abundance, float wt_scan, float wt_net, float wt_fit,
-					double max_dist, bool use_net, float wt_ims_drift_time)
+					double max_dist, bool use_net, float wt_ims_drift_time, bool use_cs)
 	{
 		mobj_umc_creator->SetOptionsEx(
 					wt_mono_mass, mono_constraint, mono_constraint_is_ppm,
 					wt_avg_mass, avg_constraint, avg_constraint_is_ppm,
 					wt_log_abundance, wt_scan, wt_net, wt_fit, 
-					max_dist, use_net, wt_ims_drift_time) ;
+					max_dist, use_net, wt_ims_drift_time, use_cs) ;
 	}
 
 }

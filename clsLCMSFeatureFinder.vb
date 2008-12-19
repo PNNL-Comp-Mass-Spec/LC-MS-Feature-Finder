@@ -574,7 +574,7 @@ Public Class clsLCMSFeatureFinder
                                 .FitWeight, _
                                 .MaxDistance, _
                                 .UseGenericNET, _
-                                .IMSDriftTimeWeight)
+                                .IMSDriftTimeWeight, True)
 
                 mUMCCreator.MinUMCLength = .MinFeatureLengthPoints
 
