@@ -27,19 +27,19 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_49B2F1A7507B439BA45F1C8DD6BCAD12"
+        "MsmKey" = "8:_230AEA2B13784F63820F7E8B359CA2FF"
         "OwnerKey" = "8:_86A48DAC39714EAE9AA6E3701FFA299C"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_49B2F1A7507B439BA45F1C8DD6BCAD12"
+        "MsmKey" = "8:_230AEA2B13784F63820F7E8B359CA2FF"
         "OwnerKey" = "8:_0A7DC56CCDE21BD3E97D8409DE5EFE98"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_49B2F1A7507B439BA45F1C8DD6BCAD12"
+        "MsmKey" = "8:_230AEA2B13784F63820F7E8B359CA2FF"
         "OwnerKey" = "8:_5639C7ACD388F17311AE15B91A0FC2BB"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -167,7 +167,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:UMCCreation, Version=1.0.2592.32718, Culture=neutral"
+            "AssemblyAsmDisplayName" = "8:UMCCreation, Version=1.0.3149.17708, Culture=neutral"
                 "ScatterAssemblies"
                 {
                     "_5639C7ACD388F17311AE15B91A0FC2BB"
@@ -300,13 +300,13 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:LCMSFeatureFinder"
-        "ProductCode" = "8:{FAD0783D-7A0F-403C-9843-2EB3DCAD1914}"
-        "PackageCode" = "8:{50005B7B-10DD-480F-A8FA-C160695D1276}"
+        "ProductCode" = "8:{9DB87A98-B967-42DD-9A1D-C199B90B60C7}"
+        "PackageCode" = "8:{C6EE391B-A6DB-43FE-A523-FA0A86B2944F}"
         "UpgradeCode" = "8:{7C68E1FF-ACD2-4D33-BB95-23B57ADB1E8F}"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:FALSE"
         "DetectNewerInstalledVersion" = "11:TRUE"
-        "ProductVersion" = "8:1.0.0"
+        "ProductVersion" = "8:1.0.1"
         "Manufacturer" = "8:Battelle Memorial Institute"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
@@ -812,7 +812,7 @@
         }
         "MergeModule"
         {
-            "{35A69C6E-5BA4-440D-803D-762B59A45393}:_49B2F1A7507B439BA45F1C8DD6BCAD12"
+            "{35A69C6E-5BA4-440D-803D-762B59A45393}:_230AEA2B13784F63820F7E8B359CA2FF"
             {
             "UseDynamicProperties" = "11:TRUE"
             "IsDependency" = "11:TRUE"

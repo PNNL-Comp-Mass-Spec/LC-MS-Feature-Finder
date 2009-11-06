@@ -585,7 +585,33 @@ void UMCCreator::CreateUMCsSinglyLinkedWithAll()
 		currentIndex++ ; 
 	}
 
+	// At the end of all of this. The mapping from mmultimap_umc_2_peak_index is from umc_index to index in sorted stuff. 
+	// Also, several of the umc indices are no longer valid. So lets step through the map, get new umc indices, renumber them,
+	// and set the umc indices in the original vectors.
+	numUmcsSoFar = 0 ; 
+	for (std::multimap<int,int>::iterator iter = mmultimap_umc_2_peak_index.begin() ; iter != mmultimap_umc_2_peak_index.end() ; )
+	{
+		int currentOldUmcNum = (*iter).first ; 
+		int numMembers = 0 ; 
+		while(iter != mmultimap_umc_2_peak_index.end() && (*iter).first == currentOldUmcNum)
+		{
+			IsotopePeak pk = vectTempPeaks[(*iter).second] ; 
+			mvect_isotope_peaks[pk.mint_original_index].mint_umc_index = numUmcsSoFar ; 
+			iter++ ; 
+			numMembers++ ; 
+		}
+		mvect_umc_num_members.push_back(numMembers) ; 
+		numUmcsSoFar++ ; 
 	}
+	// now set the map object. 
+	mmultimap_umc_2_peak_index.clear() ; 
+	for (int pkNum = 0 ; pkNum < numPeaks ; pkNum++)
+	{
+		IsotopePeak pk = mvect_isotope_peaks[pkNum] ; 
+		mmultimap_umc_2_peak_index.insert(std::pair<int,int>(pk.mint_umc_index, pkNum)) ; 
+	}
+	// DONE!! 
+}
 	
 void UMCCreator::SetPeks(std::vector<IsotopePeak> &vectPks)
 {

@@ -77,6 +77,8 @@ Public Class clsLCMSFeatureFinder
 
     ' Note: These should all be lowercase string values
     Protected Const ISOS_COLUMN_SCAN_NUM As String = "scan_num"
+    Protected Const ISOS_COLUMN_FRAME_NUM As String = "frame_num"
+    Protected Const ISOS_COLUMN_IMS_SCAN_NUM As String = "ims_scan_num"         ' LC-MS Feature Finder ignores this column
     Protected Const ISOS_COLUMN_CHARGE As String = "charge"
     Protected Const ISOS_COLUMN_ABUNDANCE As String = "abundance"
     Protected Const ISOS_COLUMN_MZ As String = "mz"
@@ -88,9 +90,12 @@ Public Class clsLCMSFeatureFinder
     Protected Const ISOS_COLUMN_SIGNAL_NOISE As String = "signal_noise"
     Protected Const ISOS_COLUMN_MONO_ABUNDANCE As String = "mono_abundance"
     Protected Const ISOS_COLUMN_MONO_PLUS2_ABUNDANCE As String = "mono_plus2_abundance"
-    Protected Const ISOS_COLUMN_INDEX As String = "index"           ' Index of the data point in the source application
-    Protected Const ISOS_COLUMN_NET As String = "net"               ' Normalized elution time
-    Protected Const ISOS_COLUMN_IMS_DRIFT_TIME As String = "ims_drift_time"
+    Protected Const ISOS_COLUMN_INDEX As String = "index"                       ' Index of the data point in the source application
+    Protected Const ISOS_COLUMN_NET As String = "net"                           ' Normalized elution time; not used by LC-MS Feature Finder
+    Protected Const ISOS_COLUMN_IMS_DRIFT_TIME As String = "ims_drift_time"     ' IMS Drift Time column in Decon2LS v1
+    Protected Const ISOS_COLUMN_IMS_DRIFT_TIME_ALT As String = "drift_time"     ' IMS Drift Time column in Decon2LS v2
+    Protected Const ISOS_COLUMN_ORIG_INTENSITY As String = "orig_intensity"     ' LC-MS Feature Finder ignores this column
+    Protected Const ISOS_COLUMN_TIA_ORIG_INTENSITY As String = "tia_orig_intensity"     ' LC-MS Feature Finder ignores this column
 
     Protected Const INI_SECTION_UMC_CREATION_OPTIONS As String = "UMCCreationOptions"
     Protected Enum eIniFileSectionConstants
@@ -122,6 +127,7 @@ Public Class clsLCMSFeatureFinder
         Public MinScan As Integer
         Public MaxScan As Integer
         Public MinFeatureLengthPoints As Integer
+        Public RequireMatchingChargeState As Boolean   ' When true, then all data points in the UMC will have the same charge state
     End Structure
 
 #End Region
@@ -284,6 +290,8 @@ Public Class clsLCMSFeatureFinder
                         .MaxScan = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "MaxScan", .MaxScan)
 
                         .MinFeatureLengthPoints = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "MinFeatureLengthPoints", .MinFeatureLengthPoints)
+
+                        .RequireMatchingChargeState = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "RequireMatchingChargeState", .RequireMatchingChargeState)
                     End With
                 End If
 
@@ -574,7 +582,8 @@ Public Class clsLCMSFeatureFinder
                                 .FitWeight, _
                                 .MaxDistance, _
                                 .UseGenericNET, _
-                                .IMSDriftTimeWeight, True)
+                                .IMSDriftTimeWeight, _
+                                .RequireMatchingChargeState)
 
                 mUMCCreator.MinUMCLength = .MinFeatureLengthPoints
 
@@ -1015,6 +1024,10 @@ Public Class clsLCMSFeatureFinder
                     Select Case strCurrentColumn
                         Case ISOS_COLUMN_SCAN_NUM
                             intColumnMapping(eInputFileColumnNames.Scan) = CInt(objEnum.Value)
+                        Case ISOS_COLUMN_FRAME_NUM
+                            intColumnMapping(eInputFileColumnNames.Scan) = CInt(objEnum.Value)
+                        Case ISOS_COLUMN_IMS_SCAN_NUM
+                            ' This is a valid column, but LC-MS Feature finder doesn't use it
                         Case ISOS_COLUMN_CHARGE
                             intColumnMapping(eInputFileColumnNames.Charge) = CInt(objEnum.Value)
                         Case ISOS_COLUMN_ABUNDANCE
@@ -1043,6 +1056,12 @@ Public Class clsLCMSFeatureFinder
                             intColumnMapping(eInputFileColumnNames.NET) = CInt(objEnum.Value)
                         Case ISOS_COLUMN_IMS_DRIFT_TIME
                             intColumnMapping(eInputFileColumnNames.IMSDriftTime) = CInt(objEnum.Value)
+                        Case ISOS_COLUMN_IMS_DRIFT_TIME_ALT
+                            intColumnMapping(eInputFileColumnNames.IMSDriftTime) = CInt(objEnum.Value)
+                        Case ISOS_COLUMN_ORIG_INTENSITY
+                            ' This is a valid column, but LC-MS Feature finder doesn't use it
+                        Case ISOS_COLUMN_TIA_ORIG_INTENSITY
+                            ' This is a valid column, but LC-MS Feature finder doesn't use it
                         Case Else
                             ' Ignore this column (display a warning on the console)
                             Console.WriteLine("Ignoring column '" & strCurrentColumn & "' since the name is not recognized")
@@ -1305,6 +1324,7 @@ Public Class clsLCMSFeatureFinder
             .MaxScan = 0
 
             .MinFeatureLengthPoints = 2
+            .RequireMatchingChargeState = False
         End With
     End Sub
 

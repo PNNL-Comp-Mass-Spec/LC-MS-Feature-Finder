@@ -129,7 +129,7 @@ public:
 
 		mdbl_max_distance = max_dist ; 
 		mbln_use_net = use_net ;
-		mbln_constraint_charge_state = true;
+		mbln_constraint_charge_state = use_cs;
 	}
 
 	// This function allows one to specify the units for the constraints
@@ -156,7 +156,7 @@ public:
 		mdbl_max_distance = max_dist ; 
 		mbln_use_net = use_net ;
 
-		mbln_constraint_charge_state = true;
+		mbln_constraint_charge_state = use_cs;
 	}
 
 	void SetMinMaxScan(int minScan, int maxScan) { 
