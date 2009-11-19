@@ -7,6 +7,9 @@
 #include <cmath>
 #include <stddef.h>
 
+#define DEBUG
+#define DATAFILTERS
+using namespace std;
 
 bool SortUMCsByMonoMassAndScan(UMC &a, UMC &b)
 {
@@ -14,12 +17,7 @@ bool SortUMCsByMonoMassAndScan(UMC &a, UMC &b)
 		return true;
 	}
 
-	if ( a.mdbl_average_mono_mass > b.mdbl_average_mono_mass){
-		return true;
-	}
-
-	return true;
-
+	return false;
 }
 
 
@@ -27,9 +25,8 @@ bool SortIsotopesByMonoMassAndScan(IsotopePeak &a, IsotopePeak &b)
 {
 	if (a.mdbl_mono_mass < b.mdbl_mono_mass)
 		return true ; 
-	if (a.mdbl_mono_mass > b.mdbl_mono_mass)
-		return false ; 
-	return (a.mdbl_mono_mass == b.mdbl_mono_mass) ; 
+
+	return false;
 }
 
 UMCCreator::UMCCreator(void)
@@ -51,26 +48,40 @@ UMCCreator::UMCCreator(void)
 
 	mshort_percent_complete = 0 ;
 
-	mint_min_scan = INT_MAX ; 
-	mint_max_scan = 0 ; 
+	mint_lc_min_scan = INT_MAX ; 
+	mint_lc_max_scan = 0 ;
+	mint_ims_min_scan = INT_MAX;
+	mint_ims_max_scan = 0;
 }
 
 UMCCreator::~UMCCreator(void)
 {
 }
 
+int UMCCreator::ReadCSVFile(){
+	return ReadCSVFile(mstr_inputFile);
+}
 
-void UMCCreator::ReadCSVFile(char *fileName)
+int UMCCreator::ReadCSVFile(char *fileName)
 {
+	char startTag[1024] ; //will be defined based on header
+	int startTagLength;
+	char *stopTag = "Blah" ; 
+	int stopTagLen = (int)strlen(stopTag) ; 
+
+	
 	Reset() ; 
 	MemMappedReader mappedReader ; 
 	mappedReader.Load(fileName) ; 
 	__int64 file_len = mappedReader.FileLength() ; 
 
-	char *startTag = "scan_num,charge,abundance,mz,fit,average_mw, monoisotopic_mw,mostabundant_mw,fwhm,signal_noise,mono_abundance,mono_plus2_abundance" ; 
-	int startTagLength = (int)strlen(startTag) ; 
-	char *stopTag = "Blah" ; 
-	int stopTagLen = (int)strlen(stopTag) ; 
+
+	//columns for IMS data 
+	//'frame_num,ims_scan_num,charge,abundance,mz,fit,average_mw,monoisotopic_mw,mostabundant_mw,fwhm,signal_noise,mono_abundance,mono_plus2_abundance,orig_intensity,TIA_orig_intensity, drift_time,cumulative_drift_time\n'
+
+	//columns for LC-MS data
+	//scan_num,charge,abundance,mz,fit,average_mw,monoisotopic_mw,mostabundant_mw,fwhm,signal_noise,mono_abundance,mono_plus2_abundance/
+
 
 	bool reading = false ; 
 	bool is_first_scan = true ; 
@@ -81,6 +92,7 @@ void UMCCreator::ReadCSVFile(char *fileName)
 	float fit = 0, mz = 0 , averageMass = 0 , monoMass = 0 , maxMass = 0 ;  
 
 	int numPeaks = 0 ; 
+	int origLineNumber = 0;
 
 	mshort_percent_complete = 0 ;
 
@@ -94,8 +106,8 @@ void UMCCreator::ReadCSVFile(char *fileName)
 	pk.mshort_charge = 0 ; 
 	pk.mflt_ims_drift_time = 0 ;
 
-	int mint_min_scan = INT_MAX ; 
-	int mint_max_scan = 0 ; 
+	mint_lc_min_scan = INT_MAX ; 
+	mint_lc_max_scan = 0 ; 
 
 	int pos = 0 ; 
 	const int MAX_HEADER_BUFFER_LEN = 1024 ; 
@@ -106,22 +118,73 @@ void UMCCreator::ReadCSVFile(char *fileName)
 	if (mshort_percent_complete > 99)
 		mshort_percent_complete = 99 ; 
 
-	bool success = mappedReader.SkipToAfterLine(startTag, buffer, startTagLength, MAX_BUFFER_LEN) ; 
+	bool success = mappedReader.GetNextLine(buffer, MAX_BUFFER_LEN, "\n", MAX_BUFFER_LEN);
+
+#ifdef DBUG
+	std::cout << "Success = " << success << "\n";
+#endif
+
+	if (success){
+		if (buffer[0] == 'f'){
+			strcpy(startTag, "frame_num,ims_scan_num,charge,abundance,mz,fit,average_mw,monoisotopic_mw,mostabundant_mw,fwhm,signal_noise,mono_abundance,mono_plus2_abundance,orig_intensity,TIA_orig_intensity,drift_time");
+			mbln_is_ims_data = true;
+		}
+		else{
+			strcpy(startTag,"scan_num,charge,abundance,mz,fit,average_mw, monoisotopic_mw,mostabundant_mw,fwhm,signal_noise,mono_abundance,mono_plus2_abundance") ; 
+			mbln_is_ims_data = false;
+		}
+	}
+	
+	startTagLength = (int)strlen(startTag) ; 
+
+#ifdef DBUG
+	std::cout << "Data file is IMS? (1=Yes, 0=No):: " << mbln_is_ims_data << "\n";
+#endif
+
+	//success = mappedReader.SkipToAfterLine(startTag, buffer, startTagLength, MAX_BUFFER_LEN) ; 
 	if (!success)
 	{
 		throw "Incorrect header for file" ; 
 	}
 	double fwhm = 0, s2n = 0 ;
+
+#ifdef DATAFILTERS
+	std::cout<< "***************************************\n";
+	std::cout<< "Data filters \n";
+	std::cout<< " Minimum LC scan = " << mint_lc_min_scan_filter;
+	std::cout<< "\n Maximum LC scan = " << mint_lc_max_scan_filter;
+	std::cout<< "\n Minimum IMS scan = " << mint_ims_min_scan_filter;
+	std::cout<< "\n Maximum IMS scan = " << mint_ims_max_scan_filter;
+	std::cout<< "\n Maximum fit = " << mflt_isotopic_fit_filter;
+	std::cout<< "\n Minimum intensity = " << mint_min_intensity;
+	std::cout<<"\n Mono mass start = " << mflt_mono_mass_start;
+	std::cout<<"\n Mono mass end = " << mflt_mono_mass_end;
+
+	std::cout<< "\n***************************************\n";
+#endif
+
 	while(!mappedReader.eof() && mappedReader.GetNextLine(buffer, MAX_BUFFER_LEN, stopTag, stopTagLen))
 	{
+
 		mshort_percent_complete = (short)((100.0 * mappedReader.CurrentPosition()) / file_len) ; 
+
 		if (mshort_percent_complete > 99)
 			mshort_percent_complete = 99 ; 
 		char *stopPtr ; 
 		char *stopPtrNext ; 
 
-		pk.mint_scan = strtol(buffer, &stopPtr, 10) ; 
+		//in either case the first value is the lc_scan_num
+		pk.mint_lc_scan = strtol(buffer, &stopPtr, 10) ; 
+
+
 		stopPtr++ ; 
+
+		if (mbln_is_ims_data){
+			//then we need to parse out ims_scan number
+			pk.mint_ims_scan =strtol(stopPtr, &stopPtrNext, 10) ; 
+			stopPtr = ++stopPtrNext;
+		}
+
 		pk.mshort_charge = (short) strtol(stopPtr, &stopPtrNext, 10) ; 
 		stopPtr = ++stopPtrNext ; 
 		pk.mdbl_abundance = strtod(stopPtr, &stopPtrNext) ; 
@@ -144,14 +207,197 @@ void UMCCreator::ReadCSVFile(char *fileName)
 		stopPtr = ++stopPtrNext ; 
 		pk.mdbl_i2_abundance = strtod(stopPtr, &stopPtrNext) ; 
 		stopPtr = ++stopPtrNext ; 
-		pk.mint_original_index = numPeaks ; 
 
-		// Note: this reader does not support reading IMS Drift time from CSV files
-		pk.mflt_ims_drift_time = 0 ;
+		//if it's ims data then we have to read four more columns of data
+		if (mbln_is_ims_data){
+			//orig intensity, TIA original intensity, drift time and cumulative drift time
+			pk.mflt_orig_intensity = strtod(stopPtr, &stopPtrNext);
+			stopPtr = ++stopPtrNext;
 
-		mvect_isotope_peaks.push_back(pk) ; 
-		numPeaks++ ; 
+			pk.mflt_tia_orig_intensity = strtod(stopPtr, &stopPtrNext);
+			stopPtr = ++stopPtrNext;
+			pk.mflt_ims_drift_time = strtod(stopPtr, &stopPtrNext);
+			stopPtr = ++stopPtrNext;
+			pk.mflt_cum_drift_time = strtod(stopPtr, &stopPtrNext);
+			stopPtr = ++stopPtrNext;
+
+		}
+
+		pk.mint_original_index = numPeaks ; //when reading from the file, this should be the line number in the original isos file
+		pk.mint_line_number_in_file = origLineNumber;
+
+		//check if the filter criteria is satisfied before adding a peak
+		if ( ConsiderPeak(pk)){
+
+				if ( mbln_process_mass_seg ){
+					if ( numPeaks > mint_max_data_points ){
+						numPeaks--;
+						break;
+					}
+				}
+
+				#ifdef DBUG
+					std::cout << "Adding peak ... "  << ConsiderPeak(pk) << "\n";
+				#endif
+            
+				//check if the min scans and max scnas for both lc and ims need to be fixed
+				if (pk.mint_lc_scan <= mint_lc_min_scan ){
+					mint_lc_min_scan = pk.mint_lc_scan;
+				}
+	
+				if (pk.mint_lc_scan >= mint_lc_max_scan){
+					mint_lc_max_scan = pk.mint_lc_scan;
+				}
+
+				if ( mbln_is_ims_data ){
+					//need to fix the ims min scans and max scans that were loaded
+					if ( pk.mint_ims_scan <= mint_ims_min_scan ){
+						mint_ims_min_scan = pk.mint_ims_scan;
+					}
+
+					if ( pk.mint_ims_scan >= mint_ims_max_scan ){
+						mint_ims_max_scan = pk.mint_ims_scan;
+					}
+				}
+	
+				mvect_isotope_peaks.push_back(pk) ;
+
+				#ifdef DBUG
+					pk.printPeak();
+				#endif
+				//increment number of peaks read
+				numPeaks++ ; 
+
+		}
+
+		origLineNumber++;
+		
 	}
+
+	
+	std::cout << " Total number of peaks we'll consider = " << numPeaks << "\n";
+	mappedReader.Close();
+	return numPeaks;
+}
+
+int UMCCreator::LoadPeaksFromDatabase(){
+	//this is to read a sql lite database and retrieve the peaks from it into the mvect_isotope_peaks array.
+
+	return 0;
+
+}
+
+//Method not used, 
+void UMCCreator::SerializeObjects(){
+
+
+	//First write out all loaded isotopic peaks
+	//we should be smarter about this file writing since there's going to be sufficient 
+	//number of peaks that don't get used into any UMC or get removed as part of short UMCs
+	//maybe each peak needs to have a bit whether to used or not
+	ofstream ofs("mvect_isotope_peaks.ros", ios::binary);
+
+	//this should write only peaks that are being used to the file
+	int count = 0;
+	for ( int i = 0; i < mvect_isotope_peaks.size(); i++){
+
+		IsotopePeak pk = (IsotopePeak ) mvect_isotope_peaks[i];
+		if ( pk.mint_umc_index != -1){
+       		ofs.write( (char*)&mvect_isotope_peaks[i], sizeof(IsotopePeak));
+			count++;
+		}
+	}
+
+	std::cout<<"Number of peaks written to file is " << count << " while total = " << mvect_isotope_peaks.size() << std::endl;
+
+	ofs.close();
+
+	//write out the umc classes
+	ofstream ofs1("mvect_umcs", ios::binary);
+	for ( int  i=0; i < mvect_umcs.size(); i++){
+		ofs1.write( (char*)&mvect_umcs[i], sizeof(UMC));
+	}
+
+	ofs1.close();
+
+
+	//write out the multimap that maps the indices on the isotopic peaks
+	//to the indices on the umcs
+	fstream fs("mmultimap_umc_2_peak_index", ios::out);
+		
+	for (std::multimap<int,int>::iterator iter = mmultimap_umc_2_peak_index.begin() ; iter != mmultimap_umc_2_peak_index.end() ; )
+	{
+			
+		int umc_index = (*iter).first ; 
+		int peak_index = (*iter).second;
+		fs << umc_index << "\t" << peak_index <<std::endl;
+	}
+
+	fs.close();
+}
+
+
+void UMCCreator::DeserializeObjects(){
+
+}
+
+
+float UMCCreator::GetLastMonoMassLoaded(){
+	float mass = FLT_MAX;
+	try{
+		IsotopePeak peak = (IsotopePeak) mvect_isotope_peaks[mvect_isotope_peaks.size()];
+		mass = peak.mdbl_mono_mass;
+	}
+	catch(exception e){
+	}
+	return mass;
+
+}
+void UMCCreator::SetInputFileName(char *filename){
+	strcpy(mstr_inputFile, filename);
+}
+
+void UMCCreator::SetOutputDiretory(char * dir){
+	strcpy(outputDir, dir);
+}
+
+//could all start going into a single branch but have kept it such so that it's a little easier to read.
+//Method to determine whether the filter 
+bool UMCCreator::ConsiderPeak(IsotopePeak peak ){
+
+	bool consider = false;
+
+	if ( peak.mdbl_abundance >= mint_min_intensity && peak.mflt_fit <= mflt_isotopic_fit_filter){
+			consider = true;
+	}
+		//if we're processing a particular mass range then we have to check for the mono mass to be within bounds
+	if ( consider && mflt_mono_mass_start <= peak.mdbl_mono_mass && peak.mdbl_mono_mass <= mflt_mono_mass_end ){
+		consider = true;
+	}
+	else{
+		consider = false;
+	}
+		
+	
+	//check if data is within LC scan range
+	if ( consider && mint_lc_min_scan_filter <=  peak.mint_lc_scan && peak.mint_lc_scan <= mint_lc_max_scan_filter  ){
+		consider = true;
+	}
+	else{
+		consider = false;
+	}
+
+	if ( mbln_is_ims_data ){
+		//check fi data is within ims scans
+		if ( consider && mint_ims_min_scan_filter <= peak.mint_ims_scan && peak.mint_ims_scan <= mint_ims_max_scan_filter ){
+			consider = true;
+		}
+		else{
+			consider = false;
+		}
+	}
+
+	return consider;
 }
 
 void UMCCreator::CalculateUMCs()
@@ -187,10 +433,10 @@ void UMCCreator::CalculateUMCs()
 			IsotopePeak pk = mvect_isotope_peaks[(*iter).second] ; 
 			vect_mass.push_back(pk.mdbl_mono_mass) ; 
 
-			if (pk.mint_scan > maxScan)
-				maxScan = pk.mint_scan ; 
-			if (pk.mint_scan < minScan )
-				minScan = pk.mint_scan ; 
+			if (pk.mint_lc_scan > maxScan)
+				maxScan = pk.mint_lc_scan ; 
+			if (pk.mint_lc_scan < minScan )
+				minScan = pk.mint_lc_scan ; 
 
 			if (pk.mdbl_mono_mass > maxMass)
 				maxMass = pk.mdbl_mono_mass ; 
@@ -200,7 +446,7 @@ void UMCCreator::CalculateUMCs()
 			if (pk.mdbl_abundance > maxAbundance)
 			{
 				maxAbundance = pk.mdbl_abundance ; 
-				maxAbundanceScan = pk.mint_scan ; 
+				maxAbundanceScan = pk.mint_lc_scan ; 
 				classRepCharge = pk.mshort_charge ; 
 				classRepMz = pk.mdbl_mz ; 
 			}
@@ -291,186 +537,12 @@ void UMCCreator::RemoveShortUMCs(int min_length)
 }
 
 
-
-void UMCCreator::AddPeakToUMC (IsotopePeak peak, UMC &umc){
-	
-	umc.mdbl_average_mono_mass = (umc.mdbl_average_mono_mass*umc.min_num_members + peak.mdbl_mono_mass)/(umc.min_num_members + 1);
-	umc.min_num_members++;
-	umc.mdbl_sum_abundance += peak.mdbl_abundance;
-	if (peak.mdbl_abundance > umc.mdbl_max_abundance){
-
-		umc.mdbl_max_abundance = peak.mdbl_abundance;
-		umc.mdbl_max_mono_mass = peak.mdbl_mono_mass;
-		umc.mint_max_abundance_scan = peak.mint_scan;
-		
-	}
-
-	umc.lastPeak = peak;
-
-	//we still have to calculate the representative charge and rep mzs values.
-
-}
-
-void UMCCreator::CreateUMCFromIsotopePeak(IsotopePeak startPeak, UMC &firstUMC){
-	firstUMC.mdbl_average_mono_mass = startPeak.mdbl_mono_mass;
-	firstUMC.mdbl_class_rep_mz = startPeak.mdbl_mz;
-	firstUMC.mdbl_max_abundance = startPeak.mdbl_abundance;
-	firstUMC.mdbl_median_mono_mass = startPeak.mdbl_mono_mass;
-	firstUMC.mdbl_min_mono_mass = startPeak.mdbl_mono_mass;
-	firstUMC.mdbl_sum_abundance = startPeak.mdbl_abundance;
-	firstUMC.min_num_members = 1;
-	firstUMC.mint_max_abundance_scan = startPeak.mint_scan;
-	firstUMC.mint_start_scan = startPeak.mint_scan;
-	firstUMC.mint_stop_scan = startPeak.mint_scan;
-	firstUMC.mshort_class_rep_charge = startPeak.mshort_charge;
-	firstUMC.lastPeak = startPeak;
-}
-
 bool UMCCreator::withinMassTolerance(double observedMass, double realMass){
 	double massDifferenceInPPM = abs(realMass - observedMass)* 1000000/realMass;
 	return ( massDifferenceInPPM <= mflt_constraint_mono_mass);
 }
 
-int UMCCreator::findCandidateUMCsForPeak(IsotopePeak peak, std::vector<UMC> &umcVector, std::vector<UMC> &candidateUMCs){
-	
-	int low = 0;
-	int high = umcVector.size()-1;
-	int mid;
-	int retValue = -1;
 
-	if ( umcVector.size() == 1)
-	{
-
-		//check if it's within the tolerance
-
-		if (withinMassTolerance(peak.mdbl_mono_mass, umcVector.at(0).mdbl_average_mono_mass)){
-			//that means that this peak belongs to this UMC
-			candidateUMCs.push_back(umcVector.at(0));
-			retValue = 1;
-		}
-	}
-	else{
-			//perform a binary search for the most appropriate UMC for this peak
-			while ( low <= high)
-			{
-				mid = (high + low)/2;
-				double trueMass = umcVector.at(mid).mdbl_average_mono_mass;
-				if ( withinMassTolerance(peak.mdbl_mono_mass,trueMass))
-				{
-					//this is the candidate UMC for this peak 
-					candidateUMCs.push_back(umcVector.at(mid));
-					//now keep moving to the left and check for matching mass UMCs
-					while (mid-1 > low && withinMassTolerance(umcVector.at(mid-1).mdbl_average_mono_mass, trueMass)){
-
-						//here you really want to insert in the front
-						candidateUMCs.push_back(umcVector.at(mid-1));
-						mid = mid  -1;
-					}
-
-					//and also move to the right and check for matching mass UMCs
-					while (mid+1 < high && withinMassTolerance(umcVector.at(mid+1).mdbl_average_mono_mass, trueMass)){
-						candidateUMCs.push_back(umcVector.at(mid+1));
-						mid = mid + 1;
-					}
-                    
-
-					retValue = 1;
-					break;
-				}
-				else if ( peak.mdbl_mono_mass < trueMass )
-				{
-					high = mid -1;
-				}
-				else
-				{
-					low = mid + 1;
-				}
-			}
-	}
-
-	return retValue;
-						
-}
-
-
-
-void UMCCreator::CreateUMCsSingleLinkedWithAllOnline(){
-	
-	std::vector<UMC>::iterator the_iterator;
-	int i = 1;
-	std::ofstream out("umcs.txt");
-	if (!out){
-		std::cout << "Could not create file \n";
-		return;
-	}
-	
-
-	//find total number of peaks that need to be clustered
-	int numPeaks = mvect_isotope_peaks.size();
-	mshort_percent_complete = 0;
-	sort(mvect_isotope_peaks.begin(), mvect_isotope_peaks.end(), &SortIsotopesByMonoMassAndScan) ; 
-	std::vector<UMC> sortedUMCVector;
-
-	IsotopePeak startPeak = mvect_isotope_peaks[0];
-
-	//first create an UMC for the first peak that comes into picture
-	UMC firstUMC;
-	CreateUMCFromIsotopePeak(startPeak, firstUMC);
-
-	//add that UMC to the list of UMCs we found
-	sortedUMCVector.push_back( firstUMC);
-
-	while (i < numPeaks){
-
-		//select individual peak;
-		IsotopePeak peak = mvect_isotope_peaks[i];
-
-		//find the list of candidate UMC's for this peak...
-		//we will use a binary search algorithm here... 
-		//that finds the UMC's that are possible based solely on 
-		//mass tolerance. If the chargeState separation is enabled then
-		//we have to use m/z values.
-		std::vector<UMC> candidateUMCs;
-		bool assigned = false;
-		if (findCandidateUMCsForPeak(peak, sortedUMCVector, candidateUMCs) != -1 ){
-			//that means we've found a candidate UMC for our peak
-			//find the distance between the current peak and the last peak in the candidate UMC
-		
-			the_iterator = candidateUMCs.begin();
-			
-			while( the_iterator != candidateUMCs.end() ) {
-				double currentDistance = PeakDistance(peak, (*the_iterator).lastPeak) ; 	
-				if (currentDistance < mdbl_max_distance){
-					//then the peak can be added to our UMC 
-					AddPeakToUMC(peak, *the_iterator);
-					//move on to the next peak
-					assigned = true;
-					break;
-				}
-				the_iterator++;
-			}	
-			
-		}
-
-		if (!assigned){
-					//if we didn't identify any candidate UMC's for our peak
-					//that means we create a new UMC from our peak and add that 
-					//to our list of UMC's
-					UMC newUMC;
-	
-					CreateUMCFromIsotopePeak(peak, newUMC);
-					sortedUMCVector.push_back(newUMC);
-					out << newUMC.mdbl_average_mono_mass << std::endl;
-
-					//sort(sortedUMCVector.begin(), sortedUMCVector.end(), &SortUMCsByMonoMassAndScan) ;
-	
-		}
-		i++;
-	}
-
-	out.close();
-
-}
 
 void UMCCreator::CreateUMCsSinglyLinkedWithAll()
 {
@@ -542,7 +614,7 @@ void UMCCreator::CreateUMCsSinglyLinkedWithAll()
 				currentDistance = PeakDistance(currentPeak, matchPeak) ; 
 				if (mbln_constraint_charge_state){
 						chargeStateMatch = (currentPeak.mshort_charge == matchPeak.mshort_charge);
-					}
+				}
 				if (currentDistance < mdbl_max_distance && chargeStateMatch)
 				{
 					if (matchPeak.mint_umc_index == -1)
@@ -622,10 +694,10 @@ void UMCCreator::SetPeks(std::vector<IsotopePeak> &vectPks)
 	for (int i = 0 ; i < numPeaks  ; i++)
 	{
 		IsotopePeak pk = mvect_isotope_peaks[i] ; 
-		if (pk.mint_scan > mint_max_scan)
-			mint_max_scan = pk.mint_scan ; 
-		if (pk.mint_scan < mint_min_scan)
-			mint_min_scan = pk.mint_scan ; 
+		if (pk.mint_lc_scan > mint_lc_max_scan)
+			mint_lc_max_scan = pk.mint_lc_scan ; 
+		if (pk.mint_lc_scan < mint_lc_min_scan)
+			mint_lc_min_scan = pk.mint_lc_scan ; 
 	}
 }
 void UMCCreator::ReadPekFileMemoryMapped(char *fileName)
@@ -724,11 +796,11 @@ void UMCCreator::ReadPekFileMemoryMapped(char *fileName)
 			}
 			if (is_pek_file_from_wiff)
 				index += 5 ; 
-			pk.mint_scan = atoi(&headerBuffer[index]) ; 
-			if (pk.mint_scan > mint_max_scan)
-				mint_max_scan = pk.mint_scan ; 
-			if (pk.mint_scan < mint_min_scan)
-				mint_min_scan = pk.mint_scan ; 
+			pk.mint_lc_scan = atoi(&headerBuffer[index]) ; 
+			if (pk.mint_lc_scan > mint_max_scan)
+				mint_max_scan = pk.mint_lc_scan ; 
+			if (pk.mint_lc_scan < mint_min_scan)
+				mint_min_scan = pk.mint_lc_scan ; 
 		}
 
 		if (is_first_scan)
@@ -844,8 +916,8 @@ void UMCCreator::ReadPekFile(char *fileName)
 	pk.mshort_charge = 0 ; 
 	pk.mflt_ims_drift_time = 0 ;
 
-	mint_min_scan = INT_MAX ; 
-	mint_max_scan = 0 ; 
+	mint_lc_min_scan = INT_MAX ; 
+	mint_lc_max_scan = 0 ; 
 
 
 	int pos = 0 ; 
@@ -877,11 +949,11 @@ void UMCCreator::ReadPekFile(char *fileName)
 					index-- ; 
 				}
 				index++ ; 
-				pk.mint_scan = atoi(&buffer[index]) ; 
-				if (pk.mint_scan > mint_max_scan)
-					mint_max_scan = pk.mint_scan ; 
-				if (pk.mint_scan < mint_min_scan)
-					mint_min_scan = pk.mint_scan ; 
+				pk.mint_lc_scan = atoi(&buffer[index]) ; 
+				if (pk.mint_lc_scan > mint_lc_max_scan)
+					mint_lc_max_scan = pk.mint_lc_scan ; 
+				if (pk.mint_lc_scan < mint_lc_min_scan)
+					mint_lc_min_scan = pk.mint_lc_scan ; 
 			}
 		}
 		else
@@ -916,6 +988,83 @@ void UMCCreator::ReadPekFile(char *fileName)
 		}
 	}
 }
+
+bool UMCCreator::PrintMapping(FILE *stream){
+
+	for (std::multimap<int,int>::iterator iter = mmultimap_umc_2_peak_index.begin() ; iter != mmultimap_umc_2_peak_index.end() ; ){
+		int currentUmcNum = (*iter).first;
+		while(iter != mmultimap_umc_2_peak_index.end() && (*iter).first == currentUmcNum)
+		{
+				IsotopePeak pk = mvect_isotope_peaks[(*iter).second] ; 
+				
+				fprintf(stream, "%d\t",currentUmcNum) ; 
+				fprintf(stream, "%d\n",pk.mint_line_number_in_file);
+				iter++ ;
+		}
+			 
+	}
+
+	return true;
+
+}
+//method can be called with either stdout or an output file to write to 
+bool UMCCreator::PrintUMCs(FILE *stream, bool print_members){
+	bool success = true;
+	fprintf(stream, "Feature_index\tmonoisotopic_mass\tAverageMonoMass\tUMCMWMin\tUMCMWMax\tScanStart\tScanEnd\tScan\tUMCMemberCount\tMaxAbundance\tUMCAbundance") ; 
+	if (print_members){
+		fprintf(stream, "\tData") ; 
+	}
+	
+	fprintf(stream, "\n") ; 
+
+	
+	int numPrinted = 1 ; 
+	for (std::multimap<int,int>::iterator iter = mmultimap_umc_2_peak_index.begin() ; iter != mmultimap_umc_2_peak_index.end() ; )
+	{
+		int currentUmcNum = (*iter).first; 
+		UMC current_umc = mvect_umcs[currentUmcNum] ; 
+		fprintf(stream, "%d\t", current_umc.mint_umc_index) ; 		
+		fprintf(stream, "%4.4f\t", current_umc.mdbl_median_mono_mass);
+		fprintf(stream, "%4.4f\t", current_umc.mdbl_average_mono_mass) ; 
+		fprintf(stream, "%4.4f\t", current_umc.mdbl_min_mono_mass);
+		fprintf(stream, "%4.4f\t", current_umc.mdbl_max_mono_mass);
+		fprintf(stream, "%d\t", current_umc.mint_start_scan) ; 
+		fprintf(stream, "%d\t", current_umc.mint_stop_scan);
+		fprintf(stream, "%d\t",current_umc.mint_max_abundance_scan);
+		fprintf(stream, "%d\t",current_umc.min_num_members) ; 
+		fprintf(stream, "%4.4f\t", current_umc.mdbl_max_abundance);
+		fprintf(stream, "%4.4f\t", current_umc.mdbl_sum_abundance) ; 
+
+		
+			while(iter != mmultimap_umc_2_peak_index.end() && (*iter).first == currentUmcNum)
+			{
+				if (print_members){	
+			
+				IsotopePeak pk = mvect_isotope_peaks[(*iter).second] ; 
+				
+				fprintf(stream, "%4.4f\t",pk.mdbl_mono_mass) ; 
+				fprintf(stream, "%d\t",pk.mint_lc_scan);
+				fprintf(stream, "%4.4\t", pk.mdbl_abundance) ; 
+				}
+				iter++ ; 
+			}
+		
+
+		numPrinted++ ; 
+		fprintf(stream, "\n") ; 
+		fflush(stream);
+	}
+
+	fclose(stream);
+
+	if ( numPrinted < 1 ){
+		success = false;
+	}
+
+	return success;
+
+}
+
 void UMCCreator::PrintUMCs(bool print_members)
 {
 	std::cout<<"UMCIndex\tUMCMonoMW\tAverageMonoMass\tUMCMWMin\tUMCMWMax\tScanStart\tScanEnd\tScanClassRep\tUMCMemberCount\tMaxAbundance\tUMCAbundance" ; 
@@ -945,7 +1094,7 @@ void UMCCreator::PrintUMCs(bool print_members)
 				std::cout.precision(4) ; 
 				std::cout<<"\t"<<pk.mdbl_mono_mass<<"\t" ; 
 				std::cout.precision(0) ; 
-				std::cout<<pk.mint_scan<<"\t"<<pk.mdbl_abundance<<"\t" ; 
+				std::cout<<pk.mint_lc_scan<<"\t"<<pk.mdbl_abundance<<"\t" ; 
 			}
 			iter++ ; 
 		}
@@ -966,7 +1115,7 @@ void UMCCreator::PrintPeaks()
 	{
 		IsotopePeak pk = mvect_isotope_peaks[i] ; 
 		std::cout.precision(0) ; 
-		std::cout<<pk.mint_scan<<"\t"<<pk.mshort_charge<<"\t"<<pk.mdbl_abundance<<"\t" ; 
+		std::cout<<pk.mint_lc_scan<<"\t"<<pk.mshort_charge<<"\t"<<pk.mdbl_abundance<<"\t" ; 
 		std::cout.precision(4) ; 
 		std::cout<<pk.mdbl_mz<<"\t" ; 
 		std::cout.precision(3) ; 

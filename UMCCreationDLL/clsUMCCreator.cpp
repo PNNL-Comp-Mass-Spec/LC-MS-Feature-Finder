@@ -1,6 +1,7 @@
-// This is the main DLL file.
+//This is the main DLL file.
 
 #include "clsUMCCreator.h"
+#include "IniReader.h"
 #using <mscorlib.dll>
 
 namespace UMCCreation
@@ -26,6 +27,7 @@ namespace UMCCreation
 		mobj_umc_creator = new UMCCreator() ; 
 	}
 
+
 	clsUMCCreator::~clsUMCCreator()
 	{
 		if (mobj_umc_creator != NULL)
@@ -36,6 +38,208 @@ namespace UMCCreation
 	{
 		menm_status = IDLE ; 
 		mobj_umc_creator->Reset() ; 
+	}
+
+	
+
+	bool clsUMCCreator::LoadProgramOptions(bool loadFilesFromIni){
+		char settings_file[512];
+		bool success = false;
+
+		GetStr(mstr_options_name, settings_file);
+		CIniReader iniReader(settings_file);
+
+		if ( loadFilesFromIni ){
+			//first load incoming and outgoing filenames and folder options
+			char *isos_file = iniReader.ReadString("Files", "InputFileName", "");
+			char *output_dir = iniReader.ReadString("Files", "OutputDirectory", ".");
+			mobj_umc_creator->SetInputFileName(isos_file);
+			mobj_umc_creator->SetOutputDiretory(output_dir);
+
+			//output directory also has to be used in some form 
+			//that's where the final printing will come into picture
+
+		}
+		
+		//next load data filters
+		float isotopicFit = iniReader.ReadFloat("DataFilters", "MaxIsotopicFit", 1);
+		if ( isotopicFit == 0 ){
+			isotopicFit = 1;
+		}
+
+		int intensityFilter = iniReader.ReadInteger("DataFilters", "MinimumIntensity", 500);
+		mflt_mono_mass_start = iniReader.ReadFloat("DataFilters", "MonoMassStart", 0);
+		mflt_mono_mass_end = iniReader.ReadFloat("DataFilters", "MonoMassEnd", FLT_MAX);
+		mbln_process_chunks = iniReader.ReadBoolean("DataFilters", "ProcessDataInChunks", false);
+		//mint_mono_mass_overlap = iniReader.ReadInteger("DataFilters", "MonoMassSegmentOverlapDa", 2);
+		if ( mflt_mono_mass_end == 0){
+			if (mbln_process_chunks){
+				mflt_mono_mass_end = mflt_mono_mass_start + 250;
+			}
+		}
+
+		
+		int maxPoints = iniReader.ReadInteger("DataFilters", "MaxDataPointsPerChunk", INT_MAX);
+		if ( maxPoints == 0){
+			maxPoints = INT_MAX;
+		}
+		
+		int imsMinScan = iniReader.ReadInteger("DataFilters", "IMSMinScan", 0);
+
+		int imsMaxScan = iniReader.ReadInteger("DataFilters", "IMSMaxScan", 50000);
+		if (imsMaxScan == 0 ){
+			imsMaxScan = INT_MAX;
+		}
+
+		int lcMinScan = iniReader.ReadInteger("DataFilters", "LCMinScan", 0);
+		int lcMaxScan = iniReader.ReadInteger("DataFilters", "LCMaxScan", 50000);
+		if (lcMaxScan == 0){
+			lcMaxScan = INT_MAX;
+		}
+
+		mobj_umc_creator->SetFilterOptions(isotopicFit, intensityFilter, lcMinScan, lcMaxScan, imsMinScan, imsMaxScan, mflt_mono_mass_start, mflt_mono_mass_end, mbln_process_chunks, maxPoints, mint_mono_mass_overlap);
+
+		//next load the UMC creation options
+		float monoMassWeight = iniReader.ReadFloat("UMCCreationOptions", "MonoMassWeight", 0.01);
+		float monoMassConstraint = iniReader.ReadFloat("UMCCreationOptions", "MonoMassConstraint", 50);
+		bool monoMassPPM = iniReader.ReadBoolean("UMCCreationOptions", "MonoMassConstraintIsPPM", true);
+		float imsDriftWeight = iniReader.ReadFloat("UMCCreationOptions","IMSDriftTimeWeight", 0.1);
+		float logAbundanceWeight = iniReader.ReadFloat("UMCCreationOptions", "LogAbundanceWeight", 0.1);
+		float netWeight = iniReader.ReadFloat("UMCCreationOptions", "NETWeight", 0.01);
+		float fitWeight = iniReader.ReadFloat("UMCCreationOptions", "FitWeight", 0.01);
+		float avgMassWeight = iniReader.ReadFloat("UMCCreationOptions", "AvgMassWeight", 0.01);
+		float avgMassConstr = iniReader.ReadFloat("UMCCreationOptions", "AvgMassConstraint", 10);
+		bool avgMassPPM = iniReader.ReadBoolean("UMCCreationOptions", "AvgMassConstraintIsPPM", true);
+		float scanWeight = iniReader.ReadFloat("UMCCreationOptions", "ScanWeight", 0);
+		float maxDist = iniReader.ReadFloat("UMCCreationOptions", "MaxDistance", 0.1);
+		bool useGeneric = iniReader.ReadBoolean("UMCCreationOptions", "UseGenericNET", true);
+		mint_min_umc_length = iniReader.ReadInteger("UMCCreationOptions", "MinFeatureLengthPoints", 2);
+		bool useCharge = iniReader.ReadBoolean("UMCCreationOptions", "UseCharge", false);
+
+		//this one is not sent over for now
+		bool useWeightedEuclidean = iniReader.ReadBoolean("UMCCreationOptions", "UseWeightedEuclidean", false);
+
+		//load all the umc creation options
+
+		mobj_umc_creator->SetOptionsEx(monoMassWeight,monoMassConstraint, monoMassPPM, avgMassWeight,avgMassConstr, avgMassPPM, logAbundanceWeight, scanWeight, netWeight, fitWeight, maxDist, useGeneric, imsDriftWeight, 
+			useCharge, useWeightedEuclidean);
+
+		return success;
+	}
+
+
+	bool clsUMCCreator::PrintUMCsToFile(){
+
+		return PrintUMCsToFile(mobj_umc_creator->GetOutputDirectory());
+			
+	}
+
+	//wrapper method to be able to output the calculated UMCs
+	bool clsUMCCreator::PrintUMCsToFile(char * direcName){
+		bool success = false;
+		//this is where you use the output directory string and prepend it to the filename provided
+		if ( direcName != NULL ){
+						
+			char mappingFileName[1024];
+
+			strcpy(mappingFileName, direcName);
+			strcat(mappingFileName, "\\umcs_LCMSFeatures.txt");
+			FILE *fp;
+   
+			fp = fopen(mappingFileName, "w");
+
+			success = mobj_umc_creator->PrintUMCs( fp, false);
+
+			fclose(fp);
+			if ( success){
+				strcpy(mappingFileName, direcName);
+				strcat(mappingFileName, "\\umcs_LCMSFeatureToPeakMap.txt");
+	
+				fp = fopen ( mappingFileName,"w");
+				success = mobj_umc_creator->PrintMapping(fp);
+				fclose(fp);
+			}
+		}
+
+//		mobj_umc_creator->PrintUMCs();
+		return success;		
+	}
+
+	/**
+	Anuj added this method to load all the necessary details for the LC ms feature finder
+	Program options, data filters and output directories are all loaded here
+	The file is read and data filters applied and finally UMCs are found.
+	*/
+	void clsUMCCreator::LoadFindUMCs(){
+		menm_status= LOADING;
+		LoadProgramOptions(true);
+
+		if ( mbln_process_chunks ){
+
+			bool objectsSerialized = false;
+
+			while ( menm_status != COMPLETE ){
+				//here's where you need to read a file process maxPoints and then continue from where you left off
+				menm_status = CHUNKING;
+
+				//here's where we have to figuure out how to laod the isos sqlite database file into the mvect_isotope_peaks
+				//vector using custom reading code. Once we have that information, we can process the rest of the data as is
+				//and write the UMC's out to the final output file. We can create the output file in APPEND mode if necessary
+
+				menm_status = LOADING;
+
+				//set the range of mass in which we'll operate
+				mobj_umc_creator->SetMassRange(mflt_mono_mass_start, mflt_mono_mass_end);
+
+				//instead of READCSV, here's where we need to read from the sqLite database and get a list of peaks
+				//also you need to do this read in such a manner that you get close to the maxPoints per segment range
+				int numPeaks = mobj_umc_creator->LoadPeaksFromDatabase();
+
+				if (numPeaks == 0){
+					menm_status= COMPLETE;
+				}
+
+				//since mbln_process is true, the file reading will stop when it has loaded maxPoints of peaks that pass filters
+				//so the mono mass of the last peak loaded will be the end mass 
+				menm_status = CLUSTERING;
+				mobj_umc_creator->CreateUMCsSinglyLinkedWithAll();
+				menm_status = SUMMARIZING;
+				
+				mstr_message = new System::String("Filtering out short clusters") ; 
+				mobj_umc_creator->RemoveShortUMCs(mint_min_umc_length) ;
+				mstr_message = new System::String("Calculating UMC statistics") ; 
+				mobj_umc_creator->CalculateUMCs() ;
+
+				//now here's where we'll have to perform some magic of writing to temporary files and reloading those files in 
+				//conjunction with loading data from the original isos files. The isos file data can be directly loaded using ReadCSV
+				//but it'll have to stack the peaks on top of existing UMC peaks. Maybe we could just serialize all objects
+				//to a temporary file and reload from there? Something to consider
+				mobj_umc_creator->SerializeObjects();
+				objectsSerialized = true;
+
+			}
+			
+		}
+		else{
+
+			menm_status = LOADING;
+			mobj_umc_creator->ReadCSVFile();
+			menm_status = CLUSTERING ; 
+		
+			mstr_message = new System::String("Clustering Isotope Peaks") ; 
+
+			mobj_umc_creator->CreateUMCsSinglyLinkedWithAll(); 
+			menm_status = SUMMARIZING ; 
+			mstr_message = new System::String("Filtering out short clusters") ; 
+			mobj_umc_creator->RemoveShortUMCs(mint_min_umc_length) ;
+			mstr_message = new System::String("Calculating UMC statistics") ; 
+			mobj_umc_creator->CalculateUMCs() ;
+			menm_status = COMPLETE ; 
+
+			Console::WriteLine(S"Total number of UMCs " );
+			Console::WriteLine(mobj_umc_creator->GetNumUmcs());
+		}
+
 	}
 
 	void clsUMCCreator::FindUMCs()
@@ -55,6 +259,7 @@ namespace UMCCreation
 	{
 		Console::WriteLine(S"Loading UMCs") ; 
 		char file_name[512] ; 
+		
 		GetStr(mstr_file_name, file_name) ; 
 		menm_status = LOADING ;
 
@@ -66,6 +271,7 @@ namespace UMCCreation
 		else
 		{
 			mstr_message = new System::String("Loading CSV file") ; 
+			Console::WriteLine(mstr_message);
 			mobj_umc_creator->ReadCSVFile(file_name) ; 
 		}
 
@@ -130,9 +336,9 @@ namespace UMCCreation
 			newUmc->mint_end_scan = umc.mint_stop_scan ; 
 
 			newUmc->mdbl_net = (double) umc.mint_max_abundance_scan ; 
-            if (mobj_umc_creator->mint_max_scan > mobj_umc_creator->mint_min_scan) {
+            if (mobj_umc_creator->mint_lc_max_scan > mobj_umc_creator->mint_lc_min_scan) {
 			     // Compute Generic NET value
-			     newUmc->mdbl_net = (double) (umc.mint_max_abundance_scan - mobj_umc_creator->mint_min_scan) * 1.0 / (mobj_umc_creator->mint_max_scan - mobj_umc_creator->mint_min_scan) ; 
+			     newUmc->mdbl_net = (double) (umc.mint_max_abundance_scan - mobj_umc_creator->mint_lc_min_scan) * 1.0 / (mobj_umc_creator->mint_lc_max_scan - mobj_umc_creator->mint_lc_min_scan) ; 
             }
 
 			newUmc->mint_scan_aligned = umc.mint_max_abundance_scan ; 
@@ -145,9 +351,9 @@ namespace UMCCreation
 		return arr_umcs ; 
 	}
 
-	void clsUMCCreator::SetMinMaxScans(int min, int max)
+	void clsUMCCreator::SetLCMinMaxScans(int min, int max)
 	{
-		mobj_umc_creator->SetMinMaxScan(min, max) ; 
+		mobj_umc_creator->SetLCMinMaxScan(min, max) ; 
 
 		if (max <= min)
 			throw new exception("Max scan must be greater than min scan");
@@ -167,7 +373,7 @@ namespace UMCCreation
 
 			pk.mint_original_index = isoPk->mint_original_index ; 
 			pk.mint_umc_index = isoPk->mint_umc_index ; 
-			pk.mint_scan = isoPk->mint_scan ; 
+			pk.mint_lc_scan = isoPk->mint_lc_scan ; 
 			pk.mshort_charge = isoPk->mshort_charge ; 
 			pk.mdbl_abundance = isoPk->mdbl_abundance ; 
 			pk.mdbl_mz = isoPk->mdbl_mz ; 
@@ -182,6 +388,10 @@ namespace UMCCreation
 		}
 		mobj_umc_creator->SetPeks(vectPeaks) ; 
 	}
+
+	void clsUMCCreator::SetFilterOptions(float isotopic_fit, int min_intensity, int min_lc_scan, int max_lc_scan, int min_ims_scan, int max_ims_scan, float mono_mass_start, float mono_mass_end, bool process_mass_seg, int maxDataPoints, int monoMassSegOverlap){
+		mobj_umc_creator->SetFilterOptions(isotopic_fit, min_intensity, min_lc_scan, max_lc_scan, min_ims_scan, max_ims_scan, mono_mass_start, mono_mass_end, process_mass_seg, maxDataPoints, monoMassSegOverlap);
+	}
 	void clsUMCCreator::SetOptions(float wt_mono_mass, float wt_avg_mass, float wt_log_abundance, float wt_scan, float wt_fit,
 			float wt_net, float mono_constraint, float avg_constraint, double max_dist, bool use_net, float wt_ims_drift_time, bool use_cs)
 	{
@@ -193,13 +403,13 @@ namespace UMCCreation
 					float wt_mono_mass, float mono_constraint, bool mono_constraint_is_ppm,
 					float wt_avg_mass, float avg_constraint, bool avg_constraint_is_ppm,
 					float wt_log_abundance, float wt_scan, float wt_net, float wt_fit,
-					double max_dist, bool use_net, float wt_ims_drift_time, bool use_cs)
+					double max_dist, bool use_net, float wt_ims_drift_time, bool use_cs, bool use_wt_euc)
 	{
 		mobj_umc_creator->SetOptionsEx(
 					wt_mono_mass, mono_constraint, mono_constraint_is_ppm,
 					wt_avg_mass, avg_constraint, avg_constraint_is_ppm,
 					wt_log_abundance, wt_scan, wt_net, wt_fit, 
-					max_dist, use_net, wt_ims_drift_time, use_cs) ;
+					max_dist, use_net, wt_ims_drift_time, use_cs, use_wt_euc) ;
 	}
 
 }

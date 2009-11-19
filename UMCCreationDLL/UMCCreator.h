@@ -8,6 +8,25 @@
 
 class UMCCreator
 {
+
+	char mstr_inputFile[512];
+	char outputDir[512];
+
+	//data filters when loading data isotopic_fit, int min_intensity, int mono_mass_start, int mono_mass_end, bool process_mass_seg, int maxDataPoints, int monoMassSegOverlap
+	float mflt_isotopic_fit_filter;
+	int mint_min_intensity;
+	float mflt_mono_mass_start;
+	float mflt_mono_mass_end;
+	bool mbln_process_mass_seg;
+	int mint_max_data_points;
+	int mint_mono_mass_seg_overlap;
+	int mint_ims_min_scan_filter;
+	int mint_ims_max_scan_filter;
+	int mint_lc_min_scan_filter;
+	int mint_lc_max_scan_filter;
+	
+
+
 	// Weights to use when clustering points
 	// Set a weight to 0 to effectively disable that weight
 	float mflt_wt_mono_mass ;
@@ -30,10 +49,16 @@ class UMCCreator
 	short mshort_percent_complete ; 
 	
 	bool mbln_use_net ;		// When True, then uses NET and not Scan
+	bool mbln_is_ims_data;
+	bool mbln_is_weighted_euc;
+
 
 public:
-	int mint_min_scan ; 
-	int mint_max_scan ; 
+	int mint_lc_min_scan ; 
+	int mint_lc_max_scan ; 
+	int mint_ims_min_scan;
+	int mint_ims_max_scan;
+
 
 	std::multimap<int, int> mmultimap_umc_2_peak_index ; 
 	std::vector<IsotopePeak> mvect_isotope_peaks ; 
@@ -75,10 +100,10 @@ public:
 		if (mbln_use_net)
 		{
 			// Convert scan difference to Generic NET
-			double net_distance = (a.mint_scan - b.mint_scan) * 1.0 / (mint_max_scan - mint_min_scan) ; 
+			double net_distance = (a.mint_lc_scan - b.mint_lc_scan) * 1.0 / (mint_lc_max_scan - mint_lc_min_scan) ; 
 			sqrDist += net_distance * net_distance * mflt_wt_net * mflt_wt_net ; 
 		} else {
-			sqrDist += (a.mint_scan - b.mint_scan) * (a.mint_scan - b.mint_scan) * mflt_wt_scan * mflt_wt_scan ; 
+			sqrDist += (a.mint_lc_scan - b.mint_lc_scan) * (a.mint_lc_scan - b.mint_lc_scan) * mflt_wt_scan * mflt_wt_scan ; 
 		}
 
 		sqrDist += (a.mflt_fit - b.mflt_fit) * (a.mflt_fit - b.mflt_fit) * mflt_wt_fit * mflt_wt_fit ; 
@@ -91,7 +116,8 @@ public:
 	}
 
 	int GetNumUmcs() { return mvect_umcs.size() ; } ; 
-	void ReadCSVFile(char *fileName) ; 
+	int ReadCSVFile(char *fileName) ; 
+	int ReadCSVFile();
 	void ReadPekFileMemoryMapped(char *fileName) ; 
 	void ReadPekFile(char *fileName) ; 
 	void CreateUMCsSinglyLinkedWithAll() ;
@@ -99,15 +125,46 @@ public:
 	void CalculateUMCs() ; 
 	void PrintPeaks() ; 
 	void PrintUMCs(bool print_members) ; 
+	bool PrintUMCs(FILE *stream, bool print_members);
+	bool PrintMapping(FILE *stream);
+
 	void Reset() ; 
 	void SetUseNet(bool use) { mbln_use_net = use ; } ; 
+	bool ConsiderPeak(IsotopePeak pk);
+	float GetLastMonoMassLoaded();
+	void SerializeObjects();
+	void DeserializeObjects();
+	int LoadPeaksFromDatabase();
+
 
 	//Functions added by Anuj Shah
 	void CreateUMCsSingleLinkedWithAllOnline();
+	
 	void CreateUMCFromIsotopePeak(IsotopePeak startPeak, UMC &firstUMC);
 	void AddPeakToUMC (IsotopePeak peak, UMC &umc);
 	bool withinMassTolerance(double observedMass, double realMass);
 	int findCandidateUMCsForPeak(IsotopePeak peak, std::vector<UMC> &umcVector, std::vector<UMC> &candidateUMCs);
+
+	void SetFilterOptions(float isotopic_fit, int min_intensity, int min_lc_scan, int max_lc_scan, int min_ims_scan, int max_ims_scan, float mono_mass_start, float mono_mass_end, bool process_mass_seg, int max_data_points, int mono_mass_seg_overlap){
+		mflt_isotopic_fit_filter = isotopic_fit;
+		mint_min_intensity = min_intensity;
+		mflt_mono_mass_start = mono_mass_start;
+		mflt_mono_mass_end = mono_mass_end;
+		mbln_process_mass_seg = process_mass_seg;
+		mint_max_data_points = max_data_points;
+		mint_mono_mass_seg_overlap = mono_mass_seg_overlap;
+		mint_lc_min_scan_filter = min_lc_scan;
+		mint_lc_max_scan_filter = max_lc_scan;
+		mint_ims_min_scan_filter = min_ims_scan;
+		mint_ims_max_scan_filter = max_ims_scan;
+	}
+
+	void SetMassRange ( float min_mono_mass, float max_mono_mass ){
+		mflt_mono_mass_start = min_mono_mass;
+		mflt_mono_mass_end = max_mono_mass;
+	}
+
+
 
 	// This function enables the default constraints and assumes ppm units for the mass constraints
 	void SetOptions(float wt_mono_mass, float wt_avg_mass, float wt_log_abundance, float wt_scan, float wt_fit,
@@ -137,7 +194,7 @@ public:
 			float wt_mono_mass, float mono_constraint, bool mono_constraint_is_ppm,
 			float wt_avg_mass, float avg_constraint, bool avg_constraint_is_ppm,
 			float wt_log_abundance, float wt_scan, float wt_net, float wt_fit,
-			double max_dist, bool use_net, float wt_ims_drift_time, bool use_cs)
+			double max_dist, bool use_net, float wt_ims_drift_time, bool use_cs, bool use_weighted_euc)
 	{
 		mflt_wt_mono_mass = wt_mono_mass; 
 		mflt_constraint_mono_mass = mono_constraint ; 
@@ -157,17 +214,27 @@ public:
 		mbln_use_net = use_net ;
 
 		mbln_constraint_charge_state = use_cs;
+		mbln_is_weighted_euc = use_weighted_euc;
 	}
 
-	void SetMinMaxScan(int minScan, int maxScan) { 
-		mint_min_scan = minScan ;
-		mint_max_scan = maxScan ; 
+	void SetLCMinMaxScan(int minScan, int maxScan) { 
+		mint_lc_min_scan = minScan ;
+		mint_lc_max_scan = maxScan ; 
 
 		// Do not allow the minimum and maximum scans to be the same number (would lead to divide by zero errors)
-		if (mint_min_scan == mint_max_scan)
-				mint_max_scan = mint_min_scan + 1 ;
+		if (mint_lc_min_scan == mint_lc_max_scan)
+				mint_lc_max_scan = mint_lc_min_scan + 1 ;
 	} ; 
 
 	void SetPeks(std::vector<IsotopePeak> &vectPks) ; 
+
+
+	void SetInputFileName ( char * filename);
+	void SetOutputDiretory( char * dir);
+
+	char * GetOutputDirectory(){
+		return outputDir;
+	}
+
 
 };
