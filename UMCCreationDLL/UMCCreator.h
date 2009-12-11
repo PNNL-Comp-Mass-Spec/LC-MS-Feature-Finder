@@ -52,6 +52,7 @@ class UMCCreator
 	bool mbln_is_ims_data;
 	bool mbln_is_weighted_euc;
 
+	float mflt_segment_size;
 
 public:
 	int mint_lc_min_scan ; 
@@ -126,7 +127,9 @@ public:
 	void PrintPeaks() ; 
 	void PrintUMCs(bool print_members) ; 
 	bool PrintUMCs(FILE *stream, bool print_members);
+	bool UMCCreator::PrintUMCs(FILE *stream, bool print_members, int featureStartIndex);
 	bool PrintMapping(FILE *stream);
+	bool PrintMapping(FILE *stream, int featureStartIndex);
 
 	void Reset() ; 
 	void SetUseNet(bool use) { mbln_use_net = use ; } ; 
@@ -145,7 +148,7 @@ public:
 	bool withinMassTolerance(double observedMass, double realMass);
 	int findCandidateUMCsForPeak(IsotopePeak peak, std::vector<UMC> &umcVector, std::vector<UMC> &candidateUMCs);
 
-	void SetFilterOptions(float isotopic_fit, int min_intensity, int min_lc_scan, int max_lc_scan, int min_ims_scan, int max_ims_scan, float mono_mass_start, float mono_mass_end, bool process_mass_seg, int max_data_points, int mono_mass_seg_overlap){
+	void SetFilterOptions(float isotopic_fit, int min_intensity, int min_lc_scan, int max_lc_scan, int min_ims_scan, int max_ims_scan, float mono_mass_start, float mono_mass_end, bool process_mass_seg, int max_data_points, int mono_mass_seg_overlap, float mono_mass_seg_size){
 		mflt_isotopic_fit_filter = isotopic_fit;
 		mint_min_intensity = min_intensity;
 		mflt_mono_mass_start = mono_mass_start;
@@ -157,6 +160,7 @@ public:
 		mint_lc_max_scan_filter = max_lc_scan;
 		mint_ims_min_scan_filter = min_ims_scan;
 		mint_ims_max_scan_filter = max_ims_scan;
+		mflt_segment_size = mono_mass_seg_size;
 	}
 
 	void SetMassRange ( float min_mono_mass, float max_mono_mass ){
@@ -224,7 +228,7 @@ public:
 		// Do not allow the minimum and maximum scans to be the same number (would lead to divide by zero errors)
 		if (mint_lc_min_scan == mint_lc_max_scan)
 				mint_lc_max_scan = mint_lc_min_scan + 1 ;
-	} ; 
+	} 
 
 	void SetPeks(std::vector<IsotopePeak> &vectPks) ; 
 
@@ -236,5 +240,8 @@ public:
 		return outputDir;
 	}
 
+	float GetSegmentSize(){
+		return mflt_segment_size;
+	}
 
 };

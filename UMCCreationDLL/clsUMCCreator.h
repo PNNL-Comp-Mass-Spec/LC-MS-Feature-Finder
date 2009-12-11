@@ -62,7 +62,10 @@ namespace UMCCreation
 		void SetOptions(float wt_mono_mass, float wt_avg_mass, float wt_log_abundance, float wt_scan, float wt_fit,
 			float wt_net, float mono_constraint, float avg_constraint, double max_dist, bool use_net, float wt_ims_drift_time, bool use_cs) ; 
 
+
 		bool PrintUMCsToFile(char * filename);
+		bool clsUMCCreator::PrintUMCsToFile(char * direcName, int i);
+		bool clsUMCCreator::PrintUMCsToFile(char * direcName, int i, int featureStartIndex);
 		bool PrintUMCsToFile();
 
 		//MaxIsotopicFit=0.15
@@ -72,8 +75,7 @@ namespace UMCCreation
 		//ProcessDataInMonoMassSegments=False
 		//MaxDataPointsPerMonoMassSegment=1000000
 		//MonoMassSegmentOverlapDa=2
-		void SetFilterOptions(float isotopic_fit, int min_intensity, int min_lc, int max_lc, int min_ims, int max_ims, float mono_mass_start, float mono_mass_end, bool process_mass_seg, int maxDataPoints, int monoMassSegOverlap);
-			
+		void SetFilterOptions(float isotopic_fit, int min_intensity, int min_lc, int max_lc, int min_ims, int max_ims, float mono_mass_start, float mono_mass_end, bool process_mass_seg, int maxDataPoints, int monoMassSegOverlap, float segmentSize);
 
 		void SetOptionsEx(
 				float wt_mono_mass, float mono_constraint, bool mono_constraint_is_ppm,

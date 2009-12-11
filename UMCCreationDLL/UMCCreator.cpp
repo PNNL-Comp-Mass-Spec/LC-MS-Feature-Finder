@@ -223,24 +223,28 @@ int UMCCreator::ReadCSVFile(char *fileName)
 
 		}
 
+		// Check here to see of MAP index is correct. Dameng
 		pk.mint_original_index = numPeaks ; //when reading from the file, this should be the line number in the original isos file
 		pk.mint_line_number_in_file = origLineNumber;
 
 		//check if the filter criteria is satisfied before adding a peak
 		if ( ConsiderPeak(pk)){
 
+			// Remove the following condition may cause one segment has more than mint_max_data_points
+			if ( false ){
 				if ( mbln_process_mass_seg ){
 					if ( numPeaks > mint_max_data_points ){
+						std::cout << "I know this happens" << "\n";
 						numPeaks--;
 						break;
 					}
 				}
-
+			}
 				#ifdef DBUG
 					std::cout << "Adding peak ... "  << ConsiderPeak(pk) << "\n";
 				#endif
             
-				//check if the min scans and max scnas for both lc and ims need to be fixed
+				//check if the min scans and max scans for both lc and ims need to be fixed
 				if (pk.mint_lc_scan <= mint_lc_min_scan ){
 					mint_lc_min_scan = pk.mint_lc_scan;
 				}
@@ -989,6 +993,26 @@ void UMCCreator::ReadPekFile(char *fileName)
 	}
 }
 
+// Will map be affected by chunking?
+bool UMCCreator::PrintMapping(FILE *stream, int featureStartIndex){
+
+	for (std::multimap<int,int>::iterator iter = mmultimap_umc_2_peak_index.begin() ; iter != mmultimap_umc_2_peak_index.end() ; ){
+		int currentUmcNum = (*iter).first;
+		while(iter != mmultimap_umc_2_peak_index.end() && (*iter).first == currentUmcNum)
+		{
+				IsotopePeak pk = mvect_isotope_peaks[(*iter).second] ; 
+				
+				fprintf(stream, "%d\t",currentUmcNum + featureStartIndex) ; 
+				fprintf(stream, "%d\n",pk.mint_line_number_in_file);
+				iter++ ;
+		}
+			 
+	}
+
+	return true;
+
+}
+
 bool UMCCreator::PrintMapping(FILE *stream){
 
 	for (std::multimap<int,int>::iterator iter = mmultimap_umc_2_peak_index.begin() ; iter != mmultimap_umc_2_peak_index.end() ; ){
@@ -1007,6 +1031,65 @@ bool UMCCreator::PrintMapping(FILE *stream){
 	return true;
 
 }
+
+//method can be called with either stdout or an output file to write to 
+bool UMCCreator::PrintUMCs(FILE *stream, bool print_members, int featureStartIndex){
+	bool success = true;
+	fprintf(stream, "Feature_index\tmonoisotopic_mass\tAverageMonoMass\tUMCMWMin\tUMCMWMax\tScanStart\tScanEnd\tScan\tUMCMemberCount\tMaxAbundance\tUMCAbundance") ; 
+	if (print_members){
+		fprintf(stream, "\tData") ; 
+	}
+	
+	fprintf(stream, "\n") ; 
+
+	
+	int numPrinted = 1 ; 
+	for (std::multimap<int,int>::iterator iter = mmultimap_umc_2_peak_index.begin() ; iter != mmultimap_umc_2_peak_index.end() ; )
+	{
+		int currentUmcNum = (*iter).first; 
+		UMC current_umc = mvect_umcs[currentUmcNum] ; 
+		fprintf(stream, "%d\t", current_umc.mint_umc_index + featureStartIndex) ; 		
+		fprintf(stream, "%4.4f\t", current_umc.mdbl_median_mono_mass);
+		fprintf(stream, "%4.4f\t", current_umc.mdbl_average_mono_mass) ; 
+		fprintf(stream, "%4.4f\t", current_umc.mdbl_min_mono_mass);
+		fprintf(stream, "%4.4f\t", current_umc.mdbl_max_mono_mass);
+		fprintf(stream, "%d\t", current_umc.mint_start_scan) ; 
+		fprintf(stream, "%d\t", current_umc.mint_stop_scan);
+		fprintf(stream, "%d\t",current_umc.mint_max_abundance_scan);
+		fprintf(stream, "%d\t",current_umc.min_num_members) ; 
+		fprintf(stream, "%4.4f\t", current_umc.mdbl_max_abundance);
+		fprintf(stream, "%4.4f\t", current_umc.mdbl_sum_abundance) ; 
+
+		
+			while(iter != mmultimap_umc_2_peak_index.end() && (*iter).first == currentUmcNum)
+			{
+				if (print_members){	
+			
+				IsotopePeak pk = mvect_isotope_peaks[(*iter).second] ; 
+				
+				fprintf(stream, "%4.4f\t",pk.mdbl_mono_mass) ; 
+				fprintf(stream, "%d\t",pk.mint_lc_scan);
+				fprintf(stream, "%4.4\t", pk.mdbl_abundance) ; 
+				}
+				iter++ ; 
+			}
+		
+
+		numPrinted++ ; 
+		fprintf(stream, "\n") ; 
+		fflush(stream);
+	}
+
+	fclose(stream);
+
+	if ( numPrinted < 1 ){
+		success = false;
+	}
+
+	return success;
+
+}
+
 //method can be called with either stdout or an output file to write to 
 bool UMCCreator::PrintUMCs(FILE *stream, bool print_members){
 	bool success = true;

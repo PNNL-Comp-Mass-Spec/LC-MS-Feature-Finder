@@ -71,17 +71,22 @@ namespace UMCCreation
 		mflt_mono_mass_start = iniReader.ReadFloat("DataFilters", "MonoMassStart", 0);
 		mflt_mono_mass_end = iniReader.ReadFloat("DataFilters", "MonoMassEnd", FLT_MAX);
 		mbln_process_chunks = iniReader.ReadBoolean("DataFilters", "ProcessDataInChunks", false);
+
 		//mint_mono_mass_overlap = iniReader.ReadInteger("DataFilters", "MonoMassSegmentOverlapDa", 2);
 		if ( mflt_mono_mass_end == 0){
 			if (mbln_process_chunks){
 				mflt_mono_mass_end = mflt_mono_mass_start + 250;
 			}
 		}
-
 		
 		int maxPoints = iniReader.ReadInteger("DataFilters", "MaxDataPointsPerChunk", INT_MAX);
 		if ( maxPoints == 0){
 			maxPoints = INT_MAX;
+		}
+
+		int chunkSize = iniReader.ReadInteger("DataFilters", "ChunkSize", 3000);
+		if (chunkSize == 0){
+			chunkSize = 3000;
 		}
 		
 		int imsMinScan = iniReader.ReadInteger("DataFilters", "IMSMinScan", 0);
@@ -97,7 +102,7 @@ namespace UMCCreation
 			lcMaxScan = INT_MAX;
 		}
 
-		mobj_umc_creator->SetFilterOptions(isotopicFit, intensityFilter, lcMinScan, lcMaxScan, imsMinScan, imsMaxScan, mflt_mono_mass_start, mflt_mono_mass_end, mbln_process_chunks, maxPoints, mint_mono_mass_overlap);
+		mobj_umc_creator->SetFilterOptions(isotopicFit, intensityFilter, lcMinScan, lcMaxScan, imsMinScan, imsMaxScan, mflt_mono_mass_start, mflt_mono_mass_end, mbln_process_chunks, maxPoints, mint_mono_mass_overlap, chunkSize);
 
 		//next load the UMC creation options
 		float monoMassWeight = iniReader.ReadFloat("UMCCreationOptions", "MonoMassWeight", 0.01);
@@ -135,13 +140,90 @@ namespace UMCCreation
 	}
 
 	//wrapper method to be able to output the calculated UMCs
+	bool clsUMCCreator::PrintUMCsToFile(char * direcName, int index, int featureStartIndex){
+		bool success = false;
+		//this is where you use the output directory string and prepend it to the filename provided
+		if ( direcName != NULL ){
+						
+			char mappingFileName[1024];
+			char chunkIndex[1024];
+
+			sprintf(chunkIndex,"%d",index);		
+			Console::WriteLine(chunkIndex);
+			strcpy(mappingFileName, direcName);
+			strcat(mappingFileName,"\\umcs_");
+			strcat(mappingFileName,chunkIndex);
+			strcat(mappingFileName,"_LCMSFeatures.txt");
+
+			Console::WriteLine(mappingFileName);
+			FILE *fp;
+  
+			fp = fopen(mappingFileName, "w");
+			success = mobj_umc_creator->PrintUMCs( fp, false, featureStartIndex);
+
+			fclose(fp);
+			if ( success){
+				strcpy(mappingFileName, direcName);
+				strcat(mappingFileName,"\\umcs_");
+				strcat(mappingFileName,chunkIndex);
+				strcat(mappingFileName,"_LCMSFeatureToPeakMap.txt");
+				fp = fopen ( mappingFileName,"w");
+				success = mobj_umc_creator->PrintMapping(fp, featureStartIndex);
+				fclose(fp);
+			}
+		}
+
+//		mobj_umc_creator->PrintUMCs();
+		return success;		
+	}
+
+	//wrapper method to be able to output the calculated UMCs
+	bool clsUMCCreator::PrintUMCsToFile(char * direcName, int index){
+		bool success = false;
+		//this is where you use the output directory string and prepend it to the filename provided
+		if ( direcName != NULL ){
+						
+			char mappingFileName[1024];
+			char chunkIndex[1024];
+
+			sprintf(chunkIndex,"%d",index);		
+			Console::WriteLine(chunkIndex);
+			strcpy(mappingFileName, direcName);
+			strcat(mappingFileName,"\\umcs_");
+			strcat(mappingFileName,chunkIndex);
+			strcat(mappingFileName,"_LCMSFeatures.txt");
+
+			Console::WriteLine(mappingFileName);
+			FILE *fp;
+  
+			fp = fopen(mappingFileName, "w");
+			success = mobj_umc_creator->PrintUMCs( fp, false);
+
+			fclose(fp);
+			if ( success){
+				strcpy(mappingFileName, direcName);
+				strcat(mappingFileName,"\\umcs_");
+				strcat(mappingFileName,chunkIndex);
+				strcat(mappingFileName,"_LCMSFeatureToPeakMap.txt");
+				fp = fopen ( mappingFileName,"w");
+				success = mobj_umc_creator->PrintMapping(fp);
+				fclose(fp);
+			}
+		}
+
+//		mobj_umc_creator->PrintUMCs();
+		return success;		
+	}
+
+
+	//wrapper method to be able to output the calculated UMCs
 	bool clsUMCCreator::PrintUMCsToFile(char * direcName){
 		bool success = false;
 		//this is where you use the output directory string and prepend it to the filename provided
 		if ( direcName != NULL ){
 						
 			char mappingFileName[1024];
-
+			
 			strcpy(mappingFileName, direcName);
 			strcat(mappingFileName, "\\umcs_LCMSFeatures.txt");
 			FILE *fp;
@@ -165,6 +247,7 @@ namespace UMCCreation
 		return success;		
 	}
 
+
 	/**
 	Anuj added this method to load all the necessary details for the LC ms feature finder
 	Program options, data filters and output directories are all loaded here
@@ -176,7 +259,13 @@ namespace UMCCreation
 
 		if ( mbln_process_chunks ){
 
+			double mflt_mono_mass_chunk_start = mflt_mono_mass_start;
+			float chunk_size = mobj_umc_creator->GetSegmentSize();
+			
 			bool objectsSerialized = false;
+			Console::WriteLine("Processing with Chunks ...");
+			int iChunk = 0;
+			int UMC_count = 0;
 
 			while ( menm_status != COMPLETE ){
 				//here's where you need to read a file process maxPoints and then continue from where you left off
@@ -187,18 +276,32 @@ namespace UMCCreation
 				//and write the UMC's out to the final output file. We can create the output file in APPEND mode if necessary
 
 				menm_status = LOADING;
-
-				//set the range of mass in which we'll operate
-				mobj_umc_creator->SetMassRange(mflt_mono_mass_start, mflt_mono_mass_end);
-
-				//instead of READCSV, here's where we need to read from the sqLite database and get a list of peaks
-				//also you need to do this read in such a manner that you get close to the maxPoints per segment range
-				int numPeaks = mobj_umc_creator->LoadPeaksFromDatabase();
-
-				if (numPeaks == 0){
+				if (mflt_mono_mass_chunk_start + chunk_size > mflt_mono_mass_end)
+				{
 					menm_status= COMPLETE;
+					continue;
 				}
 
+				//set the range of mass in which we'll operate
+				mobj_umc_creator->SetMassRange(mflt_mono_mass_chunk_start, mflt_mono_mass_chunk_start + chunk_size);
+				
+				//instead of READCSV, here's where we need to read from the sqLite database and get a list of peaks
+				//also you need to do this read in such a manner that you get close to the maxPoints per segment range
+				//int numPeaks = mobj_umc_creator->LoadPeaksFromDatabase();
+				
+				mflt_mono_mass_chunk_start = mflt_mono_mass_chunk_start + chunk_size;
+				Console::WriteLine("Processing one Chunk");
+				int numPeaks = mobj_umc_creator->ReadCSVFile();
+
+				Console::WriteLine(numPeaks); 
+				if (numPeaks == 0){
+					menm_status= COMPLETE;
+					Console::WriteLine("Nothing read in");
+					continue;
+				}
+
+
+				//if ( false ){
 				//since mbln_process is true, the file reading will stop when it has loaded maxPoints of peaks that pass filters
 				//so the mono mass of the last peak loaded will be the end mass 
 				menm_status = CLUSTERING;
@@ -214,14 +317,23 @@ namespace UMCCreation
 				//conjunction with loading data from the original isos files. The isos file data can be directly loaded using ReadCSV
 				//but it'll have to stack the peaks on top of existing UMC peaks. Maybe we could just serialize all objects
 				//to a temporary file and reload from there? Something to consider
-				mobj_umc_creator->SerializeObjects();
-				objectsSerialized = true;
-
+				// mobj_umc_creator->SerializeObjects();
+				// objectsSerialized = true;
+				
+				PrintUMCsToFile(mobj_umc_creator->GetOutputDirectory(), iChunk, UMC_count);
+				UMC_count += mobj_umc_creator->GetNumUmcs();
+				//}
+				iChunk++;
 			}
-			
+
+			// Combine several partial UMC files into one file.
+
+
+
 		}
 		else{
 
+			Console::WriteLine("Processing without Chunks");
 			menm_status = LOADING;
 			mobj_umc_creator->ReadCSVFile();
 			menm_status = CLUSTERING ; 
@@ -238,8 +350,10 @@ namespace UMCCreation
 
 			Console::WriteLine(S"Total number of UMCs " );
 			Console::WriteLine(mobj_umc_creator->GetNumUmcs());
-		}
 
+			PrintUMCsToFile(mobj_umc_creator->GetOutputDirectory());
+		}
+	
 	}
 
 	void clsUMCCreator::FindUMCs()
@@ -355,8 +469,9 @@ namespace UMCCreation
 	{
 		mobj_umc_creator->SetLCMinMaxScan(min, max) ; 
 
-		if (max <= min)
-			throw new exception("Max scan must be greater than min scan");
+		//if (max <= min)
+			//cout << " Max scan must be greater than min scan" << endl;
+			//throw new exception("Max scan must be greater than min scan");
 	}
 
 	void clsUMCCreator::SetIsotopePeaks(clsIsotopePeak* (&isotope_peaks) __gc[])
@@ -389,8 +504,8 @@ namespace UMCCreation
 		mobj_umc_creator->SetPeks(vectPeaks) ; 
 	}
 
-	void clsUMCCreator::SetFilterOptions(float isotopic_fit, int min_intensity, int min_lc_scan, int max_lc_scan, int min_ims_scan, int max_ims_scan, float mono_mass_start, float mono_mass_end, bool process_mass_seg, int maxDataPoints, int monoMassSegOverlap){
-		mobj_umc_creator->SetFilterOptions(isotopic_fit, min_intensity, min_lc_scan, max_lc_scan, min_ims_scan, max_ims_scan, mono_mass_start, mono_mass_end, process_mass_seg, maxDataPoints, monoMassSegOverlap);
+	void clsUMCCreator::SetFilterOptions(float isotopic_fit, int min_intensity, int min_lc_scan, int max_lc_scan, int min_ims_scan, int max_ims_scan, float mono_mass_start, float mono_mass_end, bool process_mass_seg, int maxDataPoints, int monoMassSegOverlap, float segmentSize){
+		mobj_umc_creator->SetFilterOptions(isotopic_fit, min_intensity, min_lc_scan, max_lc_scan, min_ims_scan, max_ims_scan, mono_mass_start, mono_mass_end, process_mass_seg, maxDataPoints, monoMassSegOverlap, segmentSize);
 	}
 	void clsUMCCreator::SetOptions(float wt_mono_mass, float wt_avg_mass, float wt_log_abundance, float wt_scan, float wt_fit,
 			float wt_net, float mono_constraint, float avg_constraint, double max_dist, bool use_net, float wt_ims_drift_time, bool use_cs)
