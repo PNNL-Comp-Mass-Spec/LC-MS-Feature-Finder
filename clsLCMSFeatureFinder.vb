@@ -222,7 +222,8 @@ Public Class clsLCMSFeatureFinder
 
         mIsotopePeaks(mIsotopePeaksCount) = New UMCCreation.clsIsotopePeak
         With mIsotopePeaks(mIsotopePeaksCount)
-            .mint_scan = intScanNumber
+            .mint_lc_scan = intScanNumber
+
             .mint_original_index = mIsotopePeaksCount
 
             ' Note: the mint_original_index value must be 0 for the first isotope peak, and then increment up from there
@@ -590,7 +591,8 @@ Public Class clsLCMSFeatureFinder
                 mUMCCreator.SetIsotopePeaks(mIsotopePeaks)
 
                 If (.MinScan > 0 Or .MaxScan > 0) AndAlso .MinScan <> .MaxScan Then
-                    mUMCCreator.SetMinMaxScans(.MinScan, .MaxScan)
+                    mUMCCreator.SetLCMinMaxScans(.MinScan, .MaxScan)
+
                 Else
                     Dim intMinScan, intMaxScan As Integer
                     intMinScan = mUMCCreator.MinScan
