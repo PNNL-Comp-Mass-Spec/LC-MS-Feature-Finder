@@ -126,10 +126,9 @@ public:
 	void CalculateUMCs() ; 
 	void PrintPeaks() ; 
 	void PrintUMCs(bool print_members) ; 
-	bool PrintUMCs(FILE *stream, bool print_members);
-	bool UMCCreator::PrintUMCs(FILE *stream, bool print_members, int featureStartIndex);
-	bool PrintMapping(FILE *stream);
+	bool PrintUMCs(FILE *stream, bool print_members, int featureStartIndex);
 	bool PrintMapping(FILE *stream, int featureStartIndex);
+	bool CreateFeatureFiles(char* baseFileName, int featureStartIndex = 0);
 
 	void Reset() ; 
 	void SetUseNet(bool use) { mbln_use_net = use ; } ; 
@@ -234,6 +233,11 @@ public:
 
 
 	void SetInputFileName ( char * filename);
+
+	char* GetInputFileName(){
+		return mstr_inputFile;
+	}
+
 	void SetOutputDiretory( char * dir);
 
 	char * GetOutputDirectory(){

@@ -42,8 +42,10 @@ namespace UMCCreation
 		// TODO: Add your methods for this class here.
 		UMCCreator __nogc *mobj_umc_creator ; 
 		void LoadFindUMCs(bool is_pek_file) ; 
-		
 
+	private:
+		char* CreateBaseFileName(char* directoryName);
+		
 	public:
 		clsUMCCreator() ; 
 		~clsUMCCreator() ; 
@@ -63,10 +65,9 @@ namespace UMCCreation
 			float wt_net, float mono_constraint, float avg_constraint, double max_dist, bool use_net, float wt_ims_drift_time, bool use_cs) ; 
 
 
-		bool PrintUMCsToFile(char * filename);
-		bool clsUMCCreator::PrintUMCsToFile(char * direcName, int i);
-		bool clsUMCCreator::PrintUMCsToFile(char * direcName, int i, int featureStartIndex);
 		bool PrintUMCsToFile();
+		bool PrintUMCsToFile(char * directoryName);
+		bool PrintUMCsToFile(char * directoryName, int chunkIndex, int featureStartIndex);
 
 		//MaxIsotopicFit=0.15
 		//MinimumIntensity=0

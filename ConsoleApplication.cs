@@ -245,11 +245,37 @@ namespace FeatureFinder
 			return success;
 		}
 
+		private string ProcessFilename(string filename)
+		{
+			// Replace all slashes to backslashes since we are working with a Windows directory 
+			filename = filename.Replace("/", "\\");
+
+			// If the string does not contain ":\" or "\\", move on.
+			if (!filename.Contains(":\\") && !filename.StartsWith("\\\\"))
+			{
+				// Append "." to the front of the string if in the form of "\blabla"
+				if (filename.StartsWith("\\"))
+				{
+					return "." + filename;
+				}
+				// Append ".\" to the front of the string if in the form of "blabla"
+				else
+				{
+					return ".\\" + filename;
+				}
+			}
+
+			// filename is in the form of "C:\blabla" or "\\blabla"
+			return filename;
+		}
+
 
 		public FeatureFinderConsoleApplication(string filename)
 		{
-            Console.WriteLine(filename);
-			mstr_controlFile = filename;
+			string newFileName = ProcessFilename(filename);
+
+			Console.WriteLine(newFileName);
+			mstr_controlFile = newFileName;
 		}
 
 

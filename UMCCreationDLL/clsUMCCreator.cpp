@@ -139,114 +139,45 @@ namespace UMCCreation
 			
 	}
 
-	//wrapper method to be able to output the calculated UMCs
-	bool clsUMCCreator::PrintUMCsToFile(char * direcName, int index, int featureStartIndex){
+	/**
+	 * Calls methods for creating UMCs and writing them to files
+	 */
+	bool clsUMCCreator::PrintUMCsToFile(char* directoryName){
 		bool success = false;
-		//this is where you use the output directory string and prepend it to the filename provided
-		if ( direcName != NULL ){
-						
-			char mappingFileName[1024];
-			char chunkIndex[1024];
 
-			sprintf(chunkIndex,"%d",index);		
-			Console::WriteLine(chunkIndex);
-			strcpy(mappingFileName, direcName);
-			strcat(mappingFileName,"\\umcs_");
-			strcat(mappingFileName,chunkIndex);
-			strcat(mappingFileName,"_LCMSFeatures.txt");
+		if (directoryName != NULL){
+			char baseFileName[1024];
 
-			Console::WriteLine(mappingFileName);
-			FILE *fp;
-  
-			fp = fopen(mappingFileName, "w");
-			success = mobj_umc_creator->PrintUMCs( fp, false, featureStartIndex);
-
-			fclose(fp);
-			if ( success){
-				strcpy(mappingFileName, direcName);
-				strcat(mappingFileName,"\\umcs_");
-				strcat(mappingFileName,chunkIndex);
-				strcat(mappingFileName,"_LCMSFeatureToPeakMap.txt");
-				fp = fopen ( mappingFileName,"w");
-				success = mobj_umc_creator->PrintMapping(fp, featureStartIndex);
-				fclose(fp);
-			}
+			strcpy(baseFileName, CreateBaseFileName(directoryName));
+			success = mobj_umc_creator->CreateFeatureFiles(baseFileName);
 		}
 
-//		mobj_umc_creator->PrintUMCs();
 		return success;		
 	}
 
-	//wrapper method to be able to output the calculated UMCs
-	bool clsUMCCreator::PrintUMCsToFile(char * direcName, int index){
+	/**
+	 * This overloaded version of the method is used to support chunking
+	 *		- Chunking was only thought to be necessary because we ran out of memory on 32-bit machines.
+	 *		- Running this program on a 64-bit machine with enough memory will allow it to process very large isos files
+	 */
+	bool clsUMCCreator::PrintUMCsToFile(char* directoryName, int chunkIndex, int featureStartIndex){
 		bool success = false;
-		//this is where you use the output directory string and prepend it to the filename provided
-		if ( direcName != NULL ){
-						
-			char mappingFileName[1024];
-			char chunkIndex[1024];
+		
+		if (directoryName != NULL){
+			char baseFileName[1024];
+			char chunk[1024];
 
-			sprintf(chunkIndex,"%d",index);		
-			Console::WriteLine(chunkIndex);
-			strcpy(mappingFileName, direcName);
-			strcat(mappingFileName,"\\umcs_");
-			strcat(mappingFileName,chunkIndex);
-			strcat(mappingFileName,"_LCMSFeatures.txt");
+			itoa(chunkIndex, chunk, 10);
 
-			Console::WriteLine(mappingFileName);
-			FILE *fp;
-  
-			fp = fopen(mappingFileName, "w");
-			success = mobj_umc_creator->PrintUMCs( fp, false);
+			strcpy(baseFileName, CreateBaseFileName(directoryName));
+			strcat(baseFileName, "_chunk");
+			strcat(baseFileName, chunk);
 
-			fclose(fp);
-			if ( success){
-				strcpy(mappingFileName, direcName);
-				strcat(mappingFileName,"\\umcs_");
-				strcat(mappingFileName,chunkIndex);
-				strcat(mappingFileName,"_LCMSFeatureToPeakMap.txt");
-				fp = fopen ( mappingFileName,"w");
-				success = mobj_umc_creator->PrintMapping(fp);
-				fclose(fp);
-			}
+			success = mobj_umc_creator->CreateFeatureFiles(baseFileName, featureStartIndex);
 		}
 
-//		mobj_umc_creator->PrintUMCs();
 		return success;		
 	}
-
-
-	//wrapper method to be able to output the calculated UMCs
-	bool clsUMCCreator::PrintUMCsToFile(char * direcName){
-		bool success = false;
-		//this is where you use the output directory string and prepend it to the filename provided
-		if ( direcName != NULL ){
-						
-			char mappingFileName[1024];
-			
-			strcpy(mappingFileName, direcName);
-			strcat(mappingFileName, "\\umcs_LCMSFeatures.txt");
-			FILE *fp;
-   
-			fp = fopen(mappingFileName, "w");
-
-			success = mobj_umc_creator->PrintUMCs( fp, false);
-
-			fclose(fp);
-			if ( success){
-				strcpy(mappingFileName, direcName);
-				strcat(mappingFileName, "\\umcs_LCMSFeatureToPeakMap.txt");
-	
-				fp = fopen ( mappingFileName,"w");
-				success = mobj_umc_creator->PrintMapping(fp);
-				fclose(fp);
-			}
-		}
-
-//		mobj_umc_creator->PrintUMCs();
-		return success;		
-	}
-
 
 	/**
 	Anuj added this method to load all the necessary details for the LC ms feature finder
@@ -525,6 +456,30 @@ namespace UMCCreation
 					wt_avg_mass, avg_constraint, avg_constraint_is_ppm,
 					wt_log_abundance, wt_scan, wt_net, wt_fit, 
 					max_dist, use_net, wt_ims_drift_time, use_cs, use_wt_euc) ;
+	}
+
+	/*
+	 * Createsthe baseFileName that will be used for properly naming the output files.
+	 *		- Desired Output format: baseFileName_LCMSFeatures.txt and baseFileName_LCMSFeatureToPeakMap.txt
+	 */
+	char* clsUMCCreator::CreateBaseFileName(char* directoryName){
+
+		char baseFileName[1024];
+
+		// Grab the Input file name so we can name our output files appropriately
+		char* inputFileName = mobj_umc_creator->GetInputFileName();
+
+		// Remove the ".csv" file extension
+		char* fileExtension = strstr(inputFileName, ".csv");
+		strcpy(fileExtension, "");
+		
+		// Append the Input File Name to the Output Directory to create the Base File Name
+		strcpy(baseFileName, directoryName);
+		strcat(baseFileName, "\\");
+		strcat(baseFileName, inputFileName);
+
+		return baseFileName;
+
 	}
 
 }

@@ -1013,25 +1013,6 @@ bool UMCCreator::PrintMapping(FILE *stream, int featureStartIndex){
 
 }
 
-bool UMCCreator::PrintMapping(FILE *stream){
-
-	for (std::multimap<int,int>::iterator iter = mmultimap_umc_2_peak_index.begin() ; iter != mmultimap_umc_2_peak_index.end() ; ){
-		int currentUmcNum = (*iter).first;
-		while(iter != mmultimap_umc_2_peak_index.end() && (*iter).first == currentUmcNum)
-		{
-				IsotopePeak pk = mvect_isotope_peaks[(*iter).second] ; 
-				
-				fprintf(stream, "%d\t",currentUmcNum) ; 
-				fprintf(stream, "%d\n",pk.mint_line_number_in_file);
-				iter++ ;
-		}
-			 
-	}
-
-	return true;
-
-}
-
 //method can be called with either stdout or an output file to write to 
 bool UMCCreator::PrintUMCs(FILE *stream, bool print_members, int featureStartIndex){
 	bool success = true;
@@ -1049,64 +1030,6 @@ bool UMCCreator::PrintUMCs(FILE *stream, bool print_members, int featureStartInd
 		int currentUmcNum = (*iter).first; 
 		UMC current_umc = mvect_umcs[currentUmcNum] ; 
 		fprintf(stream, "%d\t", current_umc.mint_umc_index + featureStartIndex) ; 		
-		fprintf(stream, "%4.4f\t", current_umc.mdbl_median_mono_mass);
-		fprintf(stream, "%4.4f\t", current_umc.mdbl_average_mono_mass) ; 
-		fprintf(stream, "%4.4f\t", current_umc.mdbl_min_mono_mass);
-		fprintf(stream, "%4.4f\t", current_umc.mdbl_max_mono_mass);
-		fprintf(stream, "%d\t", current_umc.mint_start_scan) ; 
-		fprintf(stream, "%d\t", current_umc.mint_stop_scan);
-		fprintf(stream, "%d\t",current_umc.mint_max_abundance_scan);
-		fprintf(stream, "%d\t",current_umc.min_num_members) ; 
-		fprintf(stream, "%4.4f\t", current_umc.mdbl_max_abundance);
-		fprintf(stream, "%4.4f\t", current_umc.mdbl_sum_abundance) ; 
-
-		
-			while(iter != mmultimap_umc_2_peak_index.end() && (*iter).first == currentUmcNum)
-			{
-				if (print_members){	
-			
-				IsotopePeak pk = mvect_isotope_peaks[(*iter).second] ; 
-				
-				fprintf(stream, "%4.4f\t",pk.mdbl_mono_mass) ; 
-				fprintf(stream, "%d\t",pk.mint_lc_scan);
-				fprintf(stream, "%4.4\t", pk.mdbl_abundance) ; 
-				}
-				iter++ ; 
-			}
-		
-
-		numPrinted++ ; 
-		fprintf(stream, "\n") ; 
-		fflush(stream);
-	}
-
-	fclose(stream);
-
-	if ( numPrinted < 1 ){
-		success = false;
-	}
-
-	return success;
-
-}
-
-//method can be called with either stdout or an output file to write to 
-bool UMCCreator::PrintUMCs(FILE *stream, bool print_members){
-	bool success = true;
-	fprintf(stream, "Feature_index\tmonoisotopic_mass\tAverageMonoMass\tUMCMWMin\tUMCMWMax\tScanStart\tScanEnd\tScan\tUMCMemberCount\tMaxAbundance\tUMCAbundance") ; 
-	if (print_members){
-		fprintf(stream, "\tData") ; 
-	}
-	
-	fprintf(stream, "\n") ; 
-
-	
-	int numPrinted = 1 ; 
-	for (std::multimap<int,int>::iterator iter = mmultimap_umc_2_peak_index.begin() ; iter != mmultimap_umc_2_peak_index.end() ; )
-	{
-		int currentUmcNum = (*iter).first; 
-		UMC current_umc = mvect_umcs[currentUmcNum] ; 
-		fprintf(stream, "%d\t", current_umc.mint_umc_index) ; 		
 		fprintf(stream, "%4.4f\t", current_umc.mdbl_median_mono_mass);
 		fprintf(stream, "%4.4f\t", current_umc.mdbl_average_mono_mass) ; 
 		fprintf(stream, "%4.4f\t", current_umc.mdbl_min_mono_mass);
@@ -1218,4 +1141,35 @@ void UMCCreator::Reset()
 	mvect_umc_num_members.clear() ;
 	mmultimap_umc_2_peak_index.clear() ; 
 	mshort_percent_complete = 0 ; 
+}
+
+/*
+ * Calls the worker functions for creating and outputting the Features.
+ */
+bool UMCCreator::CreateFeatureFiles(char* baseFileName, int featureStartIndex)
+{
+	bool success;
+	char completeFileName[1024];
+	FILE *file;
+
+	// Create the file where the LCMS Features will be written
+	strcpy(completeFileName, baseFileName);
+	strcat(completeFileName, "_LCMSFeatures.txt");
+	file = fopen(completeFileName, "w");
+
+	success = PrintUMCs(file, false, featureStartIndex);
+	fclose(file);
+
+	if (success)
+	{
+		// Create the file where the "Features to Peak Map" will be written
+		strcpy(completeFileName, baseFileName);
+		strcat(completeFileName, "_LCMSFeatureToPeakMap.txt");
+		file = fopen (completeFileName, "w");
+
+		success = PrintMapping(file, featureStartIndex);
+		fclose(file);
+	}
+
+	return success;
 }
