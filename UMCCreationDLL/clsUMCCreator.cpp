@@ -469,8 +469,8 @@ namespace UMCCreation
 		// Grab the Input file name so we can name our output files appropriately
 		char* inputFileName = mobj_umc_creator->GetInputFileName();
 
-		// Remove the ".csv" file extension
-		char* fileExtension = strstr(inputFileName, ".csv");
+		// Remove the "_isos.csv" file extension
+		char* fileExtension = strstr(inputFileName, "_isos.csv");
 		strcpy(fileExtension, "");
 		
 		// Append the Input File Name to the Output Directory to create the Base File Name
