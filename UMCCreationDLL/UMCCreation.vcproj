@@ -192,9 +192,10 @@
 			AssemblyName="System.Data, Version=2.0.0.0, PublicKeyToken=b77a5c561934e089, processorArchitecture=x86"
 			MinFrameworkVersion="131072"
 		/>
-		<ProjectReference
-			ReferencedProjectIdentifier="{C1A9685D-F6E7-4FFB-9535-34CA76CE9718}"
-			RelativePathToProject=".\UMCManipulation\UMCManipulation.csproj"
+		<AssemblyReference
+			RelativePath=".\UMCManipulation.dll"
+			AssemblyName="UMCManipulation, Version=1.0.2497.27026, processorArchitecture=MSIL"
+			MinFrameworkVersion="0"
 		/>
 	</References>
 	<Files>
