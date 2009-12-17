@@ -74,6 +74,25 @@
     <DebugType>none</DebugType>
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <BaseAddress>285212672</BaseAddress>
+    <FileAlignment>4096</FileAlignment>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <BaseAddress>285212672</BaseAddress>
+    <Optimize>true</Optimize>
+    <FileAlignment>4096</FileAlignment>
+    <PlatformTarget>x86</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System">
       <Name>System</Name>
@@ -84,11 +103,6 @@
     <Reference Include="System.XML">
       <Name>System.XML</Name>
     </Reference>
-    <ProjectReference Include="..\trunk\UMCCreationDLL\UMCCreation.vcproj">
-      <Name>UMCCreation</Name>
-      <Project>{8A102398-56CC-4AEE-A09C-B98741CB6ECA}</Project>
-      <Package>{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}</Package>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Content Include="App.ico" />
@@ -101,6 +115,12 @@
     <Compile Include="Utils.cs">
       <SubType>Code</SubType>
     </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="UMCCreationDLL\UMCCreation.vcproj">
+      <Project>{8A102398-56CC-4AEE-A09C-B98741CB6ECA}</Project>
+      <Name>UMCCreation</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
