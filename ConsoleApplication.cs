@@ -4,9 +4,6 @@ using UMCCreation;
 
 namespace FeatureFinder
 {
-	/// <summary>
-	/// Summary description for Class1.
-	/// </summary>
 	class FeatureFinderConsoleApplication
 	{
 		IniFile mIniFile_ControlFile;
@@ -65,7 +62,7 @@ namespace FeatureFinder
 		/**
 		 * This method is used to check if the input file exists and whether we have access to create the output
 		 * directories. It returns a boolean value indicating whether we can proceed with the rest of the program.
-		 * */
+		 */
 		private bool loadFiles()
 		{
 			bool success = false;
@@ -102,8 +99,7 @@ namespace FeatureFinder
 		 * This method is used to load in all data filters and assign values depending on control file. If values are
 		 * not present then we leave it at reasonable defaults.
 		 * Returns a bool indicating whether we can proceed with the rest of the program
-		 * */
-
+		 */
 		private bool loadDataFilters()
 		{
 			bool success = false;
@@ -112,12 +108,11 @@ namespace FeatureFinder
 				mflt_isotopicFit = Convert.ToSingle(mIniFile_ControlFile.GetStringValue("MaxIsotopicFit"));
 				mint_minimumIntensity = Convert.ToInt32(mIniFile_ControlFile.GetStringValue("MinimumIntensity"));
 
-				mbln_processDataInSegments = Convert.ToBoolean(mIniFile_ControlFile.GetStringValue("ProcessDataInMonoMassSegments"));
+				mbln_processDataInSegments = Convert.ToBoolean(mIniFile_ControlFile.GetStringValue("ProcessDataInChunks"));
 				if (mbln_processDataInSegments)
 				{
-					mint_pointsToLoadPerSegment = Convert.ToInt32(mIniFile_ControlFile.GetStringValue("MaxDataPointsPerMonoMassSegment"));
+					mint_pointsToLoadPerSegment = Convert.ToInt32(mIniFile_ControlFile.GetStringValue("MaxDataPointsPerChunk"));
 					mbyt_monoMassSegmentOverlapDa = Convert.ToByte(mIniFile_ControlFile.GetStringValue("MonoMassSegmentOverlapDa"));
-
 				}
 
 				mflt_monoMassStart = Convert.ToSingle(mIniFile_ControlFile.GetStringValue("MonoMassStart"));
@@ -139,8 +134,6 @@ namespace FeatureFinder
 				{
 					mint_max_lc_scan = Int32.MaxValue;
 				}
-
-				
 				
 				mint_min_ims_scan = Convert.ToInt32(mIniFile_ControlFile.GetStringValue("IMSMinScan"));
 				mint_max_ims_scan = Convert.ToInt32(mIniFile_ControlFile.GetStringValue("IMSMaxScan"));
@@ -162,7 +155,6 @@ namespace FeatureFinder
 
 		}
 
-
 		private bool loadUMCCreationOptions()
 		{
 			bool success = false;
@@ -170,7 +162,6 @@ namespace FeatureFinder
 			{
 				mflt_avgMassContraint = Convert.ToSingle(mIniFile_ControlFile.GetStringValue("AvgMassConstraint"));
 				mflt_monoMassConstraint = Convert.ToSingle(mIniFile_ControlFile.GetStringValue("MonoMassConstraint"));
-		
 				
 				if ( mIniFile_ControlFile.GetStringValue("MonoMassConstraintIsPPM").Equals("True"))
 				{
@@ -199,7 +190,6 @@ namespace FeatureFinder
 					mbln_useGenericNet = false;
 				}
 
-
 				//These are totally arbitrarily determined for now and that's not the correct way of doing it,
 				//These should be defined on a 0-1 or a percentage scale for better operations
 				mflt_imsDriftTimeWeight = Convert.ToSingle(mIniFile_ControlFile.GetStringValue("IMSDriftTimeWeight"));
@@ -210,23 +200,20 @@ namespace FeatureFinder
 				mflt_avgMassWeight = Convert.ToSingle(mIniFile_ControlFile.GetStringValue("AvgMassWeight"));
 				mflt_scanWeight = Convert.ToSingle(mIniFile_ControlFile.GetStringValue("ScanWeight"));
 
-
 				Console.WriteLine("Finished loading all weights");
 
 				//This is the distance between two points in Euclidean distance space to be considered the same
 				//after accounting for all factors. Again an abitrarily chosen value. There has to be some method 
 				//to this madness.
 				mflt_MaxDistance = Convert.ToSingle(mIniFile_ControlFile.GetStringValue("MaxDistance"));
-				
 		
-				mushrt_MinScan = Convert.ToUInt16(mIniFile_ControlFile.GetStringValue("MinScan"));
+				mushrt_MinScan = Convert.ToUInt16(mIniFile_ControlFile.GetStringValue("IMSMinScan"));
 				if (mushrt_MinScan <= 0)
 				{
 					mushrt_MinScan = UInt16.MinValue;
 				}
 
-
-				mushrt_MaxScan = Convert.ToUInt16(mIniFile_ControlFile.GetStringValue("MaxScan"));
+				mushrt_MaxScan = Convert.ToUInt16(mIniFile_ControlFile.GetStringValue("IMSMaxScan"));
 				if (mushrt_MaxScan <= 0)
 				{
 					mushrt_MaxScan = UInt16.MaxValue;
@@ -238,7 +225,6 @@ namespace FeatureFinder
 			}
 			catch(Exception e)
 			{
-				
 				Console.WriteLine("Exception while reading UMC creation parameters. Check control file.\n");
 				Console.WriteLine(e.StackTrace);
 			}
@@ -296,23 +282,18 @@ namespace FeatureFinder
 					success = loadDataFilters();
 				}
 
-
 				//move on and load the UMCCreation options 
 				if (success)
-
 				{
 					Console.WriteLine("Now loading umc creation options");
 					success = loadUMCCreationOptions();
 				}
-
-			
 			}
 			catch(Exception e)
 			{
 				Console.WriteLine(e.Message);
 				PrintUsage();
 			}
-		
 
 			return success;
 		}
@@ -326,11 +307,6 @@ namespace FeatureFinder
 
                 // This is where UMC creator code is called
 				c.LoadFindUMCs();
-				Console.WriteLine("Finished calculating UMCs...\nPrinting to file...");
-
-                // Save the results in a file and you need to ajust index here
-				//c.PrintUMCsToFile();
-
 			}
 			catch(Exception c)
 			{
@@ -353,8 +329,11 @@ namespace FeatureFinder
 			else
 			{
 				FeatureFinderConsoleApplication cs = new FeatureFinderConsoleApplication(args[0]);
-				cs.invokeUMCCreator();
-
+				//cs.processControlFile();
+				if (cs.loadFiles())
+				{
+					cs.invokeUMCCreator();
+				}
 			}
 		}
 
@@ -363,7 +342,7 @@ namespace FeatureFinder
 		{
 			Console.WriteLine("***************************************************");
 			Console.WriteLine("FeatureFinder usage : FeatureFinder controlfile ");
-			Console.WriteLine("Press enter to terminte program");
+			Console.WriteLine("Press enter to terminate program");
 			Console.WriteLine("***************************************************");
 			Console.WriteLine("***************************************************");
 		}

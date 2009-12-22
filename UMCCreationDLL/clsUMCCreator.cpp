@@ -185,11 +185,11 @@ namespace UMCCreation
 	The file is read and data filters applied and finally UMCs are found.
 	*/
 	void clsUMCCreator::LoadFindUMCs(){
-		menm_status= LOADING;
+		menm_status = LOADING;
 		LoadProgramOptions(true);
 
-		if ( mbln_process_chunks ){
-
+		if ( mbln_process_chunks )
+		{
 			double mflt_mono_mass_chunk_start = mflt_mono_mass_start;
 			float chunk_size = mobj_umc_creator->GetSegmentSize();
 			
@@ -231,7 +231,6 @@ namespace UMCCreation
 					continue;
 				}
 
-
 				//if ( false ){
 				//since mbln_process is true, the file reading will stop when it has loaded maxPoints of peaks that pass filters
 				//so the mono mass of the last peak loaded will be the end mass 
@@ -259,11 +258,9 @@ namespace UMCCreation
 
 			// Combine several partial UMC files into one file.
 
-
-
-		}
-		else{
-
+		} 
+		else 
+		{
 			Console::WriteLine("Processing without Chunks");
 			menm_status = LOADING;
 			mobj_umc_creator->ReadCSVFile();
