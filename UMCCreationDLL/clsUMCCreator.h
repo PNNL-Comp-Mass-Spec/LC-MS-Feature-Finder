@@ -1,5 +1,10 @@
 // clsUMCCreator.h
 #include "UMCCreator.h"
+#include <stdlib.h>
+#include <iostream> 
+#include <fstream>
+#include <stddef.h>
+#include <ctime>
 #pragma once
 
 using namespace System;
@@ -44,7 +49,13 @@ namespace UMCCreation
 		void LoadFindUMCs(bool is_pek_file) ; 
 
 	private:
-		char* CreateBaseFileName(char* directoryName);
+		FILE *mfile_logFile;
+		System::String *mstr_baseFileName;
+
+		char* CreateBaseFileName(char* directoryName, char* inputFileName);
+		void createLogFile();
+		void log(char* textToLog);
+		void log(char* textToLog, int numToLog);
 		
 	public:
 		clsUMCCreator() ; 
@@ -57,7 +68,7 @@ namespace UMCCreation
 		void ResetStatus() ; 
 
 		void SetIsotopePeaks(clsIsotopePeak* (&isotope_peaks) __gc[]) ; 
-		bool LoadProgramOptions(bool loadFilesFromIni); 
+		bool LoadProgramOptions(); 
 		int GetUmcMapping(int (&isotope_peaks_index) __gc[], int (&umc_index) __gc[]) ; 
 
 		void SetLCMinMaxScans(int min, int max) ; 
@@ -66,8 +77,7 @@ namespace UMCCreation
 
 
 		bool PrintUMCsToFile();
-		bool PrintUMCsToFile(char * directoryName);
-		bool PrintUMCsToFile(char * directoryName, int chunkIndex, int featureStartIndex);
+		bool PrintUMCsToFile(int chunkIndex, int featureStartIndex);
 
 		//MaxIsotopicFit=0.15
 		//MinimumIntensity=0

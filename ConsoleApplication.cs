@@ -260,7 +260,6 @@ namespace FeatureFinder
 		{
 			string newFileName = ProcessFilename(filename);
 
-			Console.WriteLine(newFileName);
 			mstr_controlFile = newFileName;
 			mIniFile_ControlFile = new IniFile(mstr_controlFile);
 		}

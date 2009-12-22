@@ -148,21 +148,6 @@ int UMCCreator::ReadCSVFile(char *fileName)
 	}
 	double fwhm = 0, s2n = 0 ;
 
-#ifdef DATAFILTERS
-	std::cout<< "***************************************\n";
-	std::cout<< "Data filters \n";
-	std::cout<< " Minimum LC scan = " << mint_lc_min_scan_filter;
-	std::cout<< "\n Maximum LC scan = " << mint_lc_max_scan_filter;
-	std::cout<< "\n Minimum IMS scan = " << mint_ims_min_scan_filter;
-	std::cout<< "\n Maximum IMS scan = " << mint_ims_max_scan_filter;
-	std::cout<< "\n Maximum fit = " << mflt_isotopic_fit_filter;
-	std::cout<< "\n Minimum intensity = " << mint_min_intensity;
-	std::cout<<"\n Mono mass start = " << mflt_mono_mass_start;
-	std::cout<<"\n Mono mass end = " << mflt_mono_mass_end;
-
-	std::cout<< "\n***************************************\n";
-#endif
-
 	while(!mappedReader.eof() && mappedReader.GetNextLine(buffer, MAX_BUFFER_LEN, stopTag, stopTagLen))
 	{
 
@@ -278,8 +263,6 @@ int UMCCreator::ReadCSVFile(char *fileName)
 		
 	}
 
-	
-	std::cout << " Total number of peaks we'll consider = " << numPeaks << "\n";
 	mappedReader.Close();
 	return numPeaks;
 }

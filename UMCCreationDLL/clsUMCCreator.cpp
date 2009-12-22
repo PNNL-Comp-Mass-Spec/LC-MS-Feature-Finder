@@ -42,24 +42,27 @@ namespace UMCCreation
 
 	
 
-	bool clsUMCCreator::LoadProgramOptions(bool loadFilesFromIni){
+	bool clsUMCCreator::LoadProgramOptions(){
 		char settings_file[512];
+		char logText[1024];
 		bool success = false;
 
 		GetStr(mstr_options_name, settings_file);
 		CIniReader iniReader(settings_file);
 
-		if ( loadFilesFromIni ){
-			//first load incoming and outgoing filenames and folder options
-			char *isos_file = iniReader.ReadString("Files", "InputFileName", "");
-			char *output_dir = iniReader.ReadString("Files", "OutputDirectory", ".");
-			mobj_umc_creator->SetInputFileName(isos_file);
-			mobj_umc_creator->SetOutputDiretory(output_dir);
+		//first load incoming and outgoing filenames and folder options
+		char *isos_file = iniReader.ReadString("Files", "InputFileName", "");
+		char *output_dir = iniReader.ReadString("Files", "OutputDirectory", ".");
+		mobj_umc_creator->SetInputFileName(isos_file);
+		mobj_umc_creator->SetOutputDiretory(output_dir);
 
-			//output directory also has to be used in some form 
-			//that's where the final printing will come into picture
+		mstr_baseFileName = CreateBaseFileName(output_dir, isos_file);
 
-		}
+		createLogFile();
+
+		strcpy(logText, "Loading settings from INI file: ");
+		strcat(logText, settings_file);
+		log(logText);
 		
 		//next load data filters
 		float isotopicFit = iniReader.ReadFloat("DataFilters", "MaxIsotopicFit", 1);
@@ -124,33 +127,33 @@ namespace UMCCreation
 		//this one is not sent over for now
 		bool useWeightedEuclidean = iniReader.ReadBoolean("UMCCreationOptions", "UseWeightedEuclidean", false);
 
-		//load all the umc creation options
+		log("Data Filters - ");
+		log(" Minimum LC scan = ", lcMinScan);
+		log(" Maximum LC scan = ", lcMaxScan);
+		log(" Minimum IMS scan = ", imsMinScan);
+		log(" Maximum IMS scan = ", imsMaxScan);
+		log(" Maximum fit = ", isotopicFit);
+		log(" Minimum intensity = ", intensityFilter);
+		log(" Mono mass start = ", mflt_mono_mass_start);
+		log(" Mono mass end = ", mflt_mono_mass_end);
 
+		//load all the umc creation options
 		mobj_umc_creator->SetOptionsEx(monoMassWeight,monoMassConstraint, monoMassPPM, avgMassWeight,avgMassConstr, avgMassPPM, logAbundanceWeight, scanWeight, netWeight, fitWeight, maxDist, useGeneric, imsDriftWeight, 
 			useCharge, useWeightedEuclidean);
 
 		return success;
 	}
 
-
-	bool clsUMCCreator::PrintUMCsToFile(){
-
-		return PrintUMCsToFile(mobj_umc_creator->GetOutputDirectory());
-			
-	}
-
 	/**
 	 * Calls methods for creating UMCs and writing them to files
 	 */
-	bool clsUMCCreator::PrintUMCsToFile(char* directoryName){
+	bool clsUMCCreator::PrintUMCsToFile(){
 		bool success = false;
 
-		if (directoryName != NULL){
-			char baseFileName[1024];
+		char baseFileName[1024];
 
-			strcpy(baseFileName, CreateBaseFileName(directoryName));
-			success = mobj_umc_creator->CreateFeatureFiles(baseFileName);
-		}
+		GetStr(mstr_baseFileName, baseFileName);
+		success = mobj_umc_creator->CreateFeatureFiles(baseFileName);
 
 		return success;		
 	}
@@ -160,21 +163,19 @@ namespace UMCCreation
 	 *		- Chunking was only thought to be necessary because we ran out of memory on 32-bit machines.
 	 *		- Running this program on a 64-bit machine with enough memory will allow it to process very large isos files
 	 */
-	bool clsUMCCreator::PrintUMCsToFile(char* directoryName, int chunkIndex, int featureStartIndex){
+	bool clsUMCCreator::PrintUMCsToFile(int chunkIndex, int featureStartIndex){
 		bool success = false;
 		
-		if (directoryName != NULL){
-			char baseFileName[1024];
-			char chunk[1024];
+		char baseFileName[1024];
+		char chunk[1024];
 
-			itoa(chunkIndex, chunk, 10);
+		itoa(chunkIndex, chunk, 10);
 
-			strcpy(baseFileName, CreateBaseFileName(directoryName));
-			strcat(baseFileName, "_chunk");
-			strcat(baseFileName, chunk);
+		GetStr(mstr_baseFileName, baseFileName);
+		strcat(baseFileName, "_chunk");
+		strcat(baseFileName, chunk);
 
-			success = mobj_umc_creator->CreateFeatureFiles(baseFileName, featureStartIndex);
-		}
+		success = mobj_umc_creator->CreateFeatureFiles(baseFileName, featureStartIndex);
 
 		return success;		
 	}
@@ -186,7 +187,7 @@ namespace UMCCreation
 	*/
 	void clsUMCCreator::LoadFindUMCs(){
 		menm_status = LOADING;
-		LoadProgramOptions(true);
+		LoadProgramOptions();
 
 		if ( mbln_process_chunks )
 		{
@@ -194,7 +195,7 @@ namespace UMCCreation
 			float chunk_size = mobj_umc_creator->GetSegmentSize();
 			
 			bool objectsSerialized = false;
-			Console::WriteLine("Processing with Chunks ...");
+			log("Processing with Chunks ...");
 			int iChunk = 0;
 			int UMC_count = 0;
 
@@ -221,13 +222,13 @@ namespace UMCCreation
 				//int numPeaks = mobj_umc_creator->LoadPeaksFromDatabase();
 				
 				mflt_mono_mass_chunk_start = mflt_mono_mass_chunk_start + chunk_size;
-				Console::WriteLine("Processing one Chunk");
+				log("Processing one Chunk");
 				int numPeaks = mobj_umc_creator->ReadCSVFile();
 
-				Console::WriteLine(numPeaks); 
+				log("Total number of peaks we'll consider = ", numPeaks); 
 				if (numPeaks == 0){
 					menm_status= COMPLETE;
-					Console::WriteLine("Nothing read in");
+					log("Nothing read in");
 					continue;
 				}
 
@@ -250,7 +251,7 @@ namespace UMCCreation
 				// mobj_umc_creator->SerializeObjects();
 				// objectsSerialized = true;
 				
-				PrintUMCsToFile(mobj_umc_creator->GetOutputDirectory(), iChunk, UMC_count);
+				PrintUMCsToFile(iChunk, UMC_count);
 				UMC_count += mobj_umc_creator->GetNumUmcs();
 				//}
 				iChunk++;
@@ -261,26 +262,30 @@ namespace UMCCreation
 		} 
 		else 
 		{
-			Console::WriteLine("Processing without Chunks");
+			log("Processing without Chunks...");
 			menm_status = LOADING;
-			mobj_umc_creator->ReadCSVFile();
-			menm_status = CLUSTERING ; 
-		
-			mstr_message = new System::String("Clustering Isotope Peaks") ; 
+			int numPeaks = mobj_umc_creator->ReadCSVFile();
+			log("Total number of peaks we'll consider = ", numPeaks);
 
-			mobj_umc_creator->CreateUMCsSinglyLinkedWithAll(); 
-			menm_status = SUMMARIZING ; 
-			mstr_message = new System::String("Filtering out short clusters") ; 
-			mobj_umc_creator->RemoveShortUMCs(mint_min_umc_length) ;
-			mstr_message = new System::String("Calculating UMC statistics") ; 
-			mobj_umc_creator->CalculateUMCs() ;
-			menm_status = COMPLETE ; 
+			menm_status = CLUSTERING;
+			log("Creating UMCs...");
+			mobj_umc_creator->CreateUMCsSinglyLinkedWithAll();
 
-			Console::WriteLine(S"Total number of UMCs " );
-			Console::WriteLine(mobj_umc_creator->GetNumUmcs());
+			menm_status = SUMMARIZING;
+			log("Filtering out short UMCs...");
+			mobj_umc_creator->RemoveShortUMCs(mint_min_umc_length);
 
-			PrintUMCsToFile(mobj_umc_creator->GetOutputDirectory());
+			log("Calculating UMC statistics...");
+			mobj_umc_creator->CalculateUMCs();
+			menm_status = COMPLETE;
+
+			log("Total number of UMCs = ", mobj_umc_creator->GetNumUmcs());
+
+			log("Writing output files...");
+			PrintUMCsToFile();
 		}
+
+		fclose(mfile_logFile);
 	
 	}
 
@@ -456,15 +461,12 @@ namespace UMCCreation
 	}
 
 	/*
-	 * Createsthe baseFileName that will be used for properly naming the output files.
+	 * Creates the baseFileName that will be used for properly naming the output files.
 	 *		- Desired Output format: baseFileName_LCMSFeatures.txt and baseFileName_LCMSFeatureToPeakMap.txt
 	 */
-	char* clsUMCCreator::CreateBaseFileName(char* directoryName){
+	char* clsUMCCreator::CreateBaseFileName(char* directoryName, char* inputFileName){
 
 		char baseFileName[1024];
-
-		// Grab the Input file name so we can name our output files appropriately
-		char* inputFileName = mobj_umc_creator->GetInputFileName();
 
 		// Remove the "_isos.csv" file extension
 		char* fileExtension = strstr(inputFileName, "_isos.csv");
@@ -477,6 +479,32 @@ namespace UMCCreation
 
 		return baseFileName;
 
+	}
+
+	void clsUMCCreator::createLogFile(){
+		char logFileName[1024];
+
+		GetStr(mstr_baseFileName, logFileName);
+		strcat(logFileName, "_FeatureFinder_Log.txt");
+
+		mfile_logFile = fopen(logFileName, "w");
+	}
+
+	void clsUMCCreator::log(char* textToLog){
+		time_t now = time(NULL);
+		struct tm *localTime = localtime(&now);
+
+		fprintf(mfile_logFile, "%.2d/%.2d/%.2d %.2d:%.2d:%.2d\t%s\n", localTime->tm_mon+1, localTime->tm_mday, localTime->tm_year+1900, localTime->tm_hour, localTime->tm_min, localTime->tm_sec, textToLog);
+		Console::WriteLine(textToLog);
+	}
+
+	void clsUMCCreator::log(char* textToLog, int numToLog){
+		time_t now = time(NULL);
+		struct tm *localTime = localtime(&now);
+
+		fprintf(mfile_logFile, "%.2d/%.2d/%.2d %.2d:%.2d:%.2d\t%s%d\n", localTime->tm_mon+1, localTime->tm_mday, localTime->tm_year+1900, localTime->tm_hour, localTime->tm_min, localTime->tm_sec, textToLog, numToLog);
+		Console::Write(textToLog);
+		Console::WriteLine(numToLog);
 	}
 
 }
