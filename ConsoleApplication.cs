@@ -262,6 +262,7 @@ namespace FeatureFinder
 
 			Console.WriteLine(newFileName);
 			mstr_controlFile = newFileName;
+			mIniFile_ControlFile = new IniFile(mstr_controlFile);
 		}
 
 
