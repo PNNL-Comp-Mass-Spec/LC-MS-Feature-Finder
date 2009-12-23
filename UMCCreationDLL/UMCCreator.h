@@ -9,7 +9,7 @@
 class UMCCreator
 {
 
-	char mstr_inputFile[512];
+	char mstr_inputFile[1024];
 	char outputDir[512];
 
 	//data filters when loading data isotopic_fit, int min_intensity, int mono_mass_start, int mono_mass_end, bool process_mass_seg, int maxDataPoints, int monoMassSegOverlap
@@ -24,7 +24,6 @@ class UMCCreator
 	int mint_ims_max_scan_filter;
 	int mint_lc_min_scan_filter;
 	int mint_lc_max_scan_filter;
-	
 
 
 	// Weights to use when clustering points

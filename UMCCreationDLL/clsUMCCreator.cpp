@@ -43,7 +43,7 @@ namespace UMCCreation
 	
 
 	bool clsUMCCreator::LoadProgramOptions(){
-		char settings_file[512];
+		char settings_file[1024];
 		char logText[1024];
 		bool success = false;
 
@@ -467,15 +467,27 @@ namespace UMCCreation
 	char* clsUMCCreator::CreateBaseFileName(char* directoryName, char* inputFileName){
 
 		char baseFileName[1024];
+		char* inputFileNameTok;
+		char* inputFileNameTokHelper;
+
+		// Remove any directory information from the filename
+		inputFileNameTok = strtok(inputFileName, "\\/");
+		inputFileNameTokHelper = inputFileNameTok;
+		while(inputFileNameTokHelper != NULL){
+			inputFileNameTokHelper = strtok(NULL, "\\/");
+			if(inputFileNameTokHelper != NULL){
+				inputFileNameTok = inputFileNameTokHelper;
+			}
+		}
 
 		// Remove the "_isos.csv" file extension
-		char* fileExtension = strstr(inputFileName, "_isos.csv");
+		char* fileExtension = strstr(inputFileNameTok, "_isos.csv");
 		strcpy(fileExtension, "");
 		
 		// Append the Input File Name to the Output Directory to create the Base File Name
 		strcpy(baseFileName, directoryName);
 		strcat(baseFileName, "\\");
-		strcat(baseFileName, inputFileName);
+		strcat(baseFileName, inputFileNameTok);
 
 		return baseFileName;
 
