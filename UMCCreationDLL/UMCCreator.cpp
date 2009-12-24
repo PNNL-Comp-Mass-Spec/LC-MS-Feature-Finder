@@ -979,6 +979,8 @@ void UMCCreator::ReadPekFile(char *fileName)
 // Will map be affected by chunking?
 bool UMCCreator::PrintMapping(FILE *stream, int featureStartIndex){
 
+	fprintf(stream, "Feature_Index\tPeak_Index\n");
+
 	for (std::multimap<int,int>::iterator iter = mmultimap_umc_2_peak_index.begin() ; iter != mmultimap_umc_2_peak_index.end() ; ){
 		int currentUmcNum = (*iter).first;
 		while(iter != mmultimap_umc_2_peak_index.end() && (*iter).first == currentUmcNum)
@@ -999,7 +1001,7 @@ bool UMCCreator::PrintMapping(FILE *stream, int featureStartIndex){
 //method can be called with either stdout or an output file to write to 
 bool UMCCreator::PrintUMCs(FILE *stream, bool print_members, int featureStartIndex){
 	bool success = true;
-	fprintf(stream, "Feature_index\tmonoisotopic_mass\tAverageMonoMass\tUMCMWMin\tUMCMWMax\tScanStart\tScanEnd\tScan\tUMCMemberCount\tMaxAbundance\tUMCAbundance") ; 
+	fprintf(stream, "Feature_Index\tMonoisotopic_Mass\tAverage_Mono_Mass\tUMC_MW_Min\tUMC_MW_Max\tScan_Start\tScan_End\tScan\tUMC_Member_Count\tMax_Abundance\tAbundance\tClass_Rep_MZ\tClass_Rep_Charge") ; 
 	if (print_members){
 		fprintf(stream, "\tData") ; 
 	}
@@ -1023,8 +1025,9 @@ bool UMCCreator::PrintUMCs(FILE *stream, bool print_members, int featureStartInd
 		fprintf(stream, "%d\t",current_umc.min_num_members) ; 
 		fprintf(stream, "%4.4f\t", current_umc.mdbl_max_abundance);
 		fprintf(stream, "%4.4f\t", current_umc.mdbl_sum_abundance) ; 
+		fprintf(stream, "%4.4f\t", current_umc.mdbl_class_rep_mz) ; 
+		fprintf(stream, "%d\t", current_umc.mshort_class_rep_charge) ; 
 
-		
 			while(iter != mmultimap_umc_2_peak_index.end() && (*iter).first == currentUmcNum)
 			{
 				if (print_members){	
