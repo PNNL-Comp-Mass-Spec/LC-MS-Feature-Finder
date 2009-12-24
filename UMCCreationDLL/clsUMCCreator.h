@@ -56,6 +56,7 @@ namespace UMCCreation
 		void createLogFile();
 		void log(char* textToLog);
 		void log(char* textToLog, int numToLog);
+		void log(char* textToLog, float numToLog);
 		
 	public:
 		clsUMCCreator() ; 
