@@ -507,6 +507,7 @@ namespace UMCCreation
 		struct tm *localTime = localtime(&now);
 
 		fprintf(mfile_logFile, "%.2d/%.2d/%.2d %.2d:%.2d:%.2d\t%s\n", localTime->tm_mon+1, localTime->tm_mday, localTime->tm_year+1900, localTime->tm_hour, localTime->tm_min, localTime->tm_sec, textToLog);
+		fflush(mfile_logFile);
 		Console::WriteLine(textToLog);
 	}
 
@@ -515,6 +516,7 @@ namespace UMCCreation
 		struct tm *localTime = localtime(&now);
 
 		fprintf(mfile_logFile, "%.2d/%.2d/%.2d %.2d:%.2d:%.2d\t%s%d\n", localTime->tm_mon+1, localTime->tm_mday, localTime->tm_year+1900, localTime->tm_hour, localTime->tm_min, localTime->tm_sec, textToLog, numToLog);
+		fflush(mfile_logFile);
 		Console::Write(textToLog);
 		Console::WriteLine(numToLog);
 	}
@@ -524,6 +526,7 @@ namespace UMCCreation
 		struct tm *localTime = localtime(&now);
 
 		fprintf(mfile_logFile, "%.2d/%.2d/%.2d %.2d:%.2d:%.2d\t%s%4.4f\n", localTime->tm_mon+1, localTime->tm_mday, localTime->tm_year+1900, localTime->tm_hour, localTime->tm_min, localTime->tm_sec, textToLog, numToLog);
+		fflush(mfile_logFile);
 		Console::Write(textToLog);
 		Console::WriteLine(numToLog);
 	}
