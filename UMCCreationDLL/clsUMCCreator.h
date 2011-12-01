@@ -93,7 +93,7 @@ namespace UMCCreation
 				float wt_mono_mass, float mono_constraint, bool mono_constraint_is_ppm,
 				float wt_avg_mass, float avg_constraint, bool avg_constraint_is_ppm,
 				float wt_log_abundance, float wt_scan, float wt_net, float wt_fit,
-				double max_dist, bool use_net, float wt_ims_drift_time, bool use_cs, bool use_wt_euc) ;
+				double max_dist, bool use_net, float wt_ims_drift_time, bool use_cs) ;
 
 		UMCManipulation::clsUMC* GetUMCs()[] ; 
 

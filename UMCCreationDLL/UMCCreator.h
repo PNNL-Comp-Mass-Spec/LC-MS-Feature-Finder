@@ -49,7 +49,7 @@ class UMCCreator
 	
 	bool mbln_use_net ;		// When True, then uses NET and not Scan
 	bool mbln_is_ims_data;
-	bool mbln_is_weighted_euc;
+	//bool mbln_is_weighted_euc;
 
 	float mflt_segment_size;
 
@@ -196,7 +196,7 @@ public:
 			float wt_mono_mass, float mono_constraint, bool mono_constraint_is_ppm,
 			float wt_avg_mass, float avg_constraint, bool avg_constraint_is_ppm,
 			float wt_log_abundance, float wt_scan, float wt_net, float wt_fit,
-			double max_dist, bool use_net, float wt_ims_drift_time, bool use_cs, bool use_weighted_euc)
+			double max_dist, bool use_net, float wt_ims_drift_time, bool use_cs)
 	{
 		mflt_wt_mono_mass = wt_mono_mass; 
 		mflt_constraint_mono_mass = mono_constraint ; 
@@ -216,7 +216,7 @@ public:
 		mbln_use_net = use_net ;
 
 		mbln_constraint_charge_state = use_cs;
-		mbln_is_weighted_euc = use_weighted_euc;
+		// mbln_is_weighted_euc = use_weighted_euc;
 	}
 
 	void SetLCMinMaxScan(int minScan, int maxScan) { 

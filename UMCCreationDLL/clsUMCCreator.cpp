@@ -136,10 +136,10 @@ namespace UMCCreation
 		log(" Minimum intensity = ", intensityFilter);
 		log(" Mono mass start = ", mflt_mono_mass_start);
 		log(" Mono mass end = ", mflt_mono_mass_end);
+		log(" Require matching charge state = ", useCharge);
 
 		//load all the umc creation options
-		mobj_umc_creator->SetOptionsEx(monoMassWeight,monoMassConstraint, monoMassPPM, avgMassWeight,avgMassConstr, avgMassPPM, logAbundanceWeight, scanWeight, netWeight, fitWeight, maxDist, useGeneric, imsDriftWeight, 
-			useCharge, useWeightedEuclidean);
+		mobj_umc_creator->SetOptionsEx(monoMassWeight,monoMassConstraint, monoMassPPM, avgMassWeight,avgMassConstr, avgMassPPM, logAbundanceWeight, scanWeight, netWeight, fitWeight, maxDist, useGeneric, imsDriftWeight, useCharge);
 
 		return success;
 	}
@@ -451,13 +451,13 @@ namespace UMCCreation
 					float wt_mono_mass, float mono_constraint, bool mono_constraint_is_ppm,
 					float wt_avg_mass, float avg_constraint, bool avg_constraint_is_ppm,
 					float wt_log_abundance, float wt_scan, float wt_net, float wt_fit,
-					double max_dist, bool use_net, float wt_ims_drift_time, bool use_cs, bool use_wt_euc)
+					double max_dist, bool use_net, float wt_ims_drift_time, bool use_cs)
 	{
 		mobj_umc_creator->SetOptionsEx(
 					wt_mono_mass, mono_constraint, mono_constraint_is_ppm,
 					wt_avg_mass, avg_constraint, avg_constraint_is_ppm,
 					wt_log_abundance, wt_scan, wt_net, wt_fit, 
-					max_dist, use_net, wt_ims_drift_time, use_cs, use_wt_euc) ;
+					max_dist, use_net, wt_ims_drift_time, use_cs) ;
 	}
 
 	/*
