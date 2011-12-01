@@ -15,7 +15,7 @@
     {
         "Entry"
         {
-        "MsmKey" = "8:_021DC78335C2B54A2DE60E78D4163018"
+        "MsmKey" = "8:_22003A5FCDD489F151FFAE8862249447"
         "OwnerKey" = "8:_86A48DAC39714EAE9AA6E3701FFA299C"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -27,14 +27,32 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_021DC78335C2B54A2DE60E78D4163018"
+        "MsmKey" = "8:_FAA29EDC0523EBEB107FC9497F76AEB2"
+        "OwnerKey" = "8:_86A48DAC39714EAE9AA6E3701FFA299C"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_FAA29EDC0523EBEB107FC9497F76AEB2"
+        "OwnerKey" = "8:_22003A5FCDD489F151FFAE8862249447"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_86A48DAC39714EAE9AA6E3701FFA299C"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_22003A5FCDD489F151FFAE8862249447"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_FAA29EDC0523EBEB107FC9497F76AEB2"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -62,6 +80,19 @@
             "PrerequisitesLocation" = "2:1"
             "Url" = "8:"
             "ComponentsUrl" = "8:"
+                "Items"
+                {
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:.NETFramework,Version=v4.0,Profile=Client"
+                    {
+                    "Name" = "8:Microsoft .NET Framework 4 Client Profile (x86 and x64)"
+                    "ProductCode" = "8:.NETFramework,Version=v4.0,Profile=Client"
+                    }
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:Microsoft.Windows.Installer.3.1"
+                    {
+                    "Name" = "8:Windows Installer 3.1"
+                    "ProductCode" = "8:Microsoft.Windows.Installer.3.1"
+                    }
+                }
             }
         }
         "Release"
@@ -86,6 +117,19 @@
             "PrerequisitesLocation" = "2:1"
             "Url" = "8:"
             "ComponentsUrl" = "8:"
+                "Items"
+                {
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:.NETFramework,Version=v4.0,Profile=Client"
+                    {
+                    "Name" = "8:Microsoft .NET Framework 4 Client Profile (x86 and x64)"
+                    "ProductCode" = "8:.NETFramework,Version=v4.0,Profile=Client"
+                    }
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:Microsoft.Windows.Installer.3.1"
+                    {
+                    "Name" = "8:Windows Installer 3.1"
+                    "ProductCode" = "8:Microsoft.Windows.Installer.3.1"
+                    }
+                }
             }
         }
     }
@@ -108,7 +152,7 @@
                 {
                 "Name" = "8:.NET Framework"
                 "Message" = "8:[VSDNETMSG]"
-                "Version" = "8:3.5.21022"
+                "FrameworkVersion" = "8:.NETFramework,Version=v4.0"
                 "AllowLaterVersions" = "11:FALSE"
                 "InstallUrl" = "8:http://go.microsoft.com/fwlink/?LinkId=9832"
                 "SupportedRuntimes" = "8:1.1.4322"
@@ -117,14 +161,45 @@
         }
         "File"
         {
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_021DC78335C2B54A2DE60E78D4163018"
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_22003A5FCDD489F151FFAE8862249447"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:UMCCreation, Version=1.0.4351.27575, Culture=neutral, processorArchitecture=x86"
+                "ScatterAssemblies"
+                {
+                    "_22003A5FCDD489F151FFAE8862249447"
+                    {
+                    "Name" = "8:UMCCreation.dll"
+                    "Attributes" = "3:512"
+                    }
+                }
+            "SourcePath" = "8:UMCCreation.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_7F3CF256234C47FE8EF56BCA781953EF"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_FAA29EDC0523EBEB107FC9497F76AEB2"
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
             "AssemblyAsmDisplayName" = "8:UMCManipulation, Version=1.0.2497.27026, Culture=neutral"
                 "ScatterAssemblies"
                 {
-                    "_021DC78335C2B54A2DE60E78D4163018"
+                    "_FAA29EDC0523EBEB107FC9497F76AEB2"
                     {
                     "Name" = "8:UMCManipulation.dll"
                     "Attributes" = "3:512"
@@ -216,8 +291,9 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:LCMSFeatureFinder"
         "ProductCode" = "8:{9DB87A98-B967-42DD-9A1D-C199B90B60C7}"
-        "PackageCode" = "8:{C6EE391B-A6DB-43FE-A523-FA0A86B2944F}"
+        "PackageCode" = "8:{B2D7A23F-66E0-4B7C-83A8-202958367B9D}"
         "UpgradeCode" = "8:{7C68E1FF-ACD2-4D33-BB95-23B57ADB1E8F}"
+        "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:FALSE"
         "DetectNewerInstalledVersion" = "11:TRUE"

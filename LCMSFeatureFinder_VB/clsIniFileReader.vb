@@ -134,8 +134,7 @@ Public Class clsIniFileReader
     End Sub
 
     Protected Sub ExpandKeyDataIfNeeded(ByVal intSectionIndex As Integer, ByVal intLengthRequired As Integer)
-        Dim intIndex As Integer
-        Dim intNewLength As Integer
+		Dim intNewLength As Integer
 
         If intSectionIndex >= 0 And intSectionIndex < mSectionsLowerCase.Length Then
             If intLengthRequired > mKeysBySection(intSectionIndex).NamesLowerCase.Length Then

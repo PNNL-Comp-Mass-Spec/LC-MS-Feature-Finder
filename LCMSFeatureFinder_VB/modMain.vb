@@ -27,7 +27,7 @@ Option Strict On
 
 Module modMain
 
-    Public Const PROGRAM_DATE As String = "February 5, 2007"
+	Public Const PROGRAM_DATE As String = "November 30, 2011"
 
     Private mInputDataFilePath As String
     Private mOutputFileOrFolderPath As String
@@ -107,7 +107,7 @@ Module modMain
     Private Function SetOptionsUsingCommandLineParameters(ByVal objParseCommandLine As clsParseCommandLine) As Boolean
         ' Returns True if no problems; otherwise, returns false
 
-        Dim strValue As String
+		Dim strValue As String = String.Empty
         Dim strValidParameters() As String = New String() {"I", "O", "D", "P", "Q"}
 
         Try
@@ -149,30 +149,28 @@ Module modMain
     Private Sub ShowProgramHelp()
 
         Dim strSyntax As String
-        Dim ioPath As System.IO.Path
+		Try
 
-        Try
+			strSyntax = "This program will read a text file with mass and intensity data for MS spectra and determine the LC-MS features present using UMCCreation.dll." & ControlChars.NewLine & ControlChars.NewLine
+			strSyntax &= "Program syntax:" & ControlChars.NewLine & System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location)
+			strSyntax &= " /I:InputFileName.txt [/O:OutputFileName.txt]" & ControlChars.NewLine & ControlChars.NewLine
 
-            strSyntax = "This program will read a text file with mass and intensity data for MS spectra and determine the LC-MS features present using UMCCreation.dll." & ControlChars.NewLine & ControlChars.NewLine
-            strSyntax &= "Program syntax:" & ControlChars.NewLine & ioPath.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location)
-            strSyntax &= " /I:InputFileName.txt [/O:OutputFileName.txt]" & ControlChars.NewLine & ControlChars.NewLine
+			strSyntax &= "The input file name is required. If the filename contains spaces, then surround it with double quotes. " & _
+						 "If the output file name is not supplied, then it will be auto-generated as InputFileName_Features.txt. " & _
+						 "This program will look for a .Ini file with the same name as the input file, but with extension .Ini  " & _
+						 "If found, then it reads the .Ini file to load the weight values to use when clustering the data." & ControlChars.NewLine & ControlChars.NewLine
 
-            strSyntax &= "The input file name is required. If the filename contains spaces, then surround it with double quotes. " & _
-                         "If the output file name is not supplied, then it will be auto-generated as InputFileName_Features.txt. " & _
-                         "This program will look for a .Ini file with the same name as the input file, but with extension .Ini  " & _
-                         "If found, then it reads the .Ini file to load the weight values to use when clustering the data." & ControlChars.NewLine & ControlChars.NewLine
+			strSyntax &= "Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2007" & ControlChars.NewLine
+			strSyntax &= "Copyright 2007, Battelle Memorial Institute.  All Rights Reserved." & ControlChars.NewLine & ControlChars.NewLine
 
-            strSyntax &= "Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2007" & ControlChars.NewLine
-            strSyntax &= "Copyright 2007, Battelle Memorial Institute.  All Rights Reserved." & ControlChars.NewLine & ControlChars.NewLine
+			strSyntax &= "E-mail: matthew.monroe@pnl.gov or matt@alchemistmatt.com" & ControlChars.NewLine
+			strSyntax &= "Website: http://ncrr.pnl.gov/ or http://www.sysbio.org/resources/staff/"
 
-            strSyntax &= "E-mail: matthew.monroe@pnl.gov or matt@alchemistmatt.com" & ControlChars.NewLine
-            strSyntax &= "Website: http://ncrr.pnl.gov/ or http://www.sysbio.org/resources/staff/"
+			Console.WriteLine(strSyntax)
 
-            Console.WriteLine(strSyntax)
-
-        Catch ex As System.Exception
-            Console.WriteLine("Error displaying the program syntax: " & ex.Message)
-        End Try
+		Catch ex As System.Exception
+			Console.WriteLine("Error displaying the program syntax: " & ex.Message)
+		End Try
 
     End Sub
 

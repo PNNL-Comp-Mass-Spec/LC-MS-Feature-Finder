@@ -251,7 +251,7 @@ Public Class clsLCMSFeatureFinder
         ' ToDo: Look for a .Ini file that matches strInputFilePath
         ' Open it and parse the settings present, updatingmFeatureFindingOptions
 
-        Dim strIniFilePath As String
+		Dim strIniFilePath As String = String.Empty
         Dim strInputFolderPath As String
 
         Dim objIniFileReader As clsIniFileReader
@@ -290,9 +290,13 @@ Public Class clsLCMSFeatureFinder
                         .MinScan = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "MinScan", .MinScan)
                         .MaxScan = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "MaxScan", .MaxScan)
 
+						.MinScan = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "LCMinScan", .MinScan)
+						.MaxScan = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "LCMaxScan", .MaxScan)
+
                         .MinFeatureLengthPoints = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "MinFeatureLengthPoints", .MinFeatureLengthPoints)
 
-                        .RequireMatchingChargeState = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "RequireMatchingChargeState", .RequireMatchingChargeState)
+						.RequireMatchingChargeState = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "RequireMatchingChargeState", .RequireMatchingChargeState)
+						.RequireMatchingChargeState = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "UseCharge", .RequireMatchingChargeState)
                     End With
                 End If
 
@@ -347,8 +351,7 @@ Public Class clsLCMSFeatureFinder
         Dim blnColumnMappingDefined As Boolean
         Dim intColumnMapping() As Integer
 
-        Dim intFeatureCount As Integer
-        Dim objFeatures() As UMCManipulation.clsUMC
+		Dim objFeatures() As UMCManipulation.clsUMC
         Dim intIsotopePeaksIndex() As Integer
         Dim intUMCIndex() As Integer
 
@@ -672,14 +675,12 @@ Public Class clsLCMSFeatureFinder
 
     Private Function GenerateOutputFileNameForLCMSFeatures(ByVal strInputFilePath As String) As String
 
-        Dim strInputFileName As String
+		Dim strInputFileName As String = "UnknownDataset"
 
         Try
-            strInputFileName = "UnknownDataset"
-
-            If Not strInputFilePath Is Nothing AndAlso strInputFilePath.Length > 0 Then
-                strInputFileName = System.IO.Path.GetFileNameWithoutExtension(strInputFilePath)
-            End If
+			If Not strInputFilePath Is Nothing AndAlso strInputFilePath.Length > 0 Then
+				strInputFileName = System.IO.Path.GetFileNameWithoutExtension(strInputFilePath)
+			End If
         Catch ex As System.Exception
             ' Ignore errors here
         End Try
@@ -690,11 +691,9 @@ Public Class clsLCMSFeatureFinder
 
     Private Function GenerateOutputFileNameForPeakToFeatureMap(ByVal strLCMSFeaturesFilePath As String) As String
 
-        Dim strInputFileName As String
+		Dim strInputFileName As String = "UnknownDataset"
 
         Try
-            strInputFileName = "UnknownDataset"
-
             If Not strLCMSFeaturesFilePath Is Nothing AndAlso strLCMSFeaturesFilePath.Length > 0 Then
                 strInputFileName = System.IO.Path.GetFileNameWithoutExtension(strLCMSFeaturesFilePath)
 
@@ -810,18 +809,15 @@ Public Class clsLCMSFeatureFinder
         ' Otherwise, uses the application folder as the base folder
         ' If blnCreateFolder = True, then creates the folder; if creation fails, then tries the other available folder (depending on blnUseSystemTempPath)
 
-        Dim objGUID As System.Guid
-
-        Dim strFolderName As String
+		Dim strFolderName As String
         Dim strFolderPathBase As String
-        Dim strFolderPath As String
+		Dim strFolderPath As String = String.Empty
         Dim strFolderPathTest As String
 
         Dim intLoop As Integer
         Dim blnSuccess As Boolean
 
-        objGUID = New System.Guid
-        strFolderName = objGUID.NewGuid.ToString
+		strFolderName = System.Guid.NewGuid.ToString
         strFolderName = strFolderName.Replace("-"c, "_"c)
 
         For intLoop = 1 To 2
@@ -905,9 +901,9 @@ Public Class clsLCMSFeatureFinder
     End Sub
 
     Public Shared Function IsNumber(ByVal strValue As String) As Boolean
-        Dim objFormatProvider As System.Globalization.NumberFormatInfo
+		Dim result As Double
         Try
-            Return Double.TryParse(strValue, Globalization.NumberStyles.Any, objFormatProvider, 0)
+			Return Double.TryParse(strValue, result)
         Catch ex As System.Exception
             Return False
         End Try
@@ -961,37 +957,37 @@ Public Class clsLCMSFeatureFinder
 
     ''End Function
 
-    Private Sub LogErrors(ByVal strSource As String, ByVal strMessage As String, ByVal ex As System.Exception, Optional ByVal blnAllowInformUser As Boolean = True, Optional ByVal blnAllowThrowingException As Boolean = True, Optional ByVal blnLogLocalOnly As Boolean = True, Optional ByVal eNewErrorCode As eLCMSFeatureFinderErrorCodes = eLCMSFeatureFinderErrorCodes.NoError.NoError)
-        Dim strMessageWithoutCRLF As String
+	Private Sub LogErrors(ByVal strSource As String, ByVal strMessage As String, ByVal ex As System.Exception, Optional ByVal blnAllowInformUser As Boolean = True, Optional ByVal blnAllowThrowingException As Boolean = True, Optional ByVal blnLogLocalOnly As Boolean = True, Optional ByVal eNewErrorCode As eLCMSFeatureFinderErrorCodes = eLCMSFeatureFinderErrorCodes.NoError)
+		Dim strMessageWithoutCRLF As String
 
-        mStatusMessage = String.Copy(strMessage)
+		mStatusMessage = String.Copy(strMessage)
 
-        strMessageWithoutCRLF = mStatusMessage.Replace(ControlChars.NewLine, "; ")
+		strMessageWithoutCRLF = mStatusMessage.Replace(ControlChars.NewLine, "; ")
 
-        If ex Is Nothing Then
-            ex = New System.Exception("Error")
-        Else
-            If Not ex.Message Is Nothing AndAlso ex.Message.Length > 0 Then
-                strMessageWithoutCRLF &= "; " & ex.Message
-            End If
-        End If
+		If ex Is Nothing Then
+			ex = New System.Exception("Error")
+		Else
+			If Not ex.Message Is Nothing AndAlso ex.Message.Length > 0 Then
+				strMessageWithoutCRLF &= "; " & ex.Message
+			End If
+		End If
 
-        Console.WriteLine(Now.ToLongTimeString & "; " & strMessageWithoutCRLF, strSource)
+		Console.WriteLine(System.DateTime.Now().ToLongTimeString & "; " & strMessageWithoutCRLF, strSource)
 
-        'If Not mErrorLogger Is Nothing Then
-        '    mErrorLogger.PostError(mStatusMessage.Replace(ControlChars.NewLine, "; "), ex, blnLogLocalOnly)
-        'End If
+		'If Not mErrorLogger Is Nothing Then
+		'    mErrorLogger.PostError(mStatusMessage.Replace(ControlChars.NewLine, "; "), ex, blnLogLocalOnly)
+		'End If
 
-        If Not eNewErrorCode = eLCMSFeatureFinderErrorCodes.NoError Then
-            SetErrorCode(eNewErrorCode, True)
-        End If
+		If Not eNewErrorCode = eLCMSFeatureFinderErrorCodes.NoError Then
+			SetErrorCode(eNewErrorCode, True)
+		End If
 
-        If mShowMessages AndAlso blnAllowInformUser Then
-            System.Windows.Forms.MessageBox.Show(mStatusMessage & ControlChars.NewLine & ex.Message, "Error", Windows.Forms.MessageBoxButtons.OK, Windows.Forms.MessageBoxIcon.Exclamation)
-        ElseIf blnAllowThrowingException Then
-            Throw New System.Exception(mStatusMessage, ex)
-        End If
-    End Sub
+		If mShowMessages AndAlso blnAllowInformUser Then
+			System.Windows.Forms.MessageBox.Show(mStatusMessage & ControlChars.NewLine & ex.Message, "Error", Windows.Forms.MessageBoxButtons.OK, Windows.Forms.MessageBoxIcon.Exclamation)
+		ElseIf blnAllowThrowingException Then
+			Throw New System.Exception(mStatusMessage, ex)
+		End If
+	End Sub
 
     Protected Sub OperationComplete()
         RaiseEvent ProgressComplete()
@@ -1150,10 +1146,7 @@ Public Class clsLCMSFeatureFinder
         Dim strOutputFilePath As String
         Dim strOutputFolderPath As String
 
-        Dim ioPath As System.IO.Path
-
         Dim ioFileMatch As System.IO.FileInfo
-        Dim ioFolderMatch As System.IO.DirectoryInfo
 
         Dim ioFileInfo As System.IO.FileInfo
         Dim ioInputFolderInfo As System.IO.DirectoryInfo
@@ -1195,13 +1188,13 @@ Public Class clsLCMSFeatureFinder
                     strInputFolderPath = ioFileInfo.DirectoryName
                 Else
                     ' Use the current working directory
-                    strInputFolderPath = ioPath.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
+					strInputFolderPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
                 End If
 
                 ioInputFolderInfo = New System.IO.DirectoryInfo(strInputFolderPath)
 
                 ' Remove any directory information from strinputFilePath
-                strInputFilePath = ioPath.GetFileName(strInputFilePath)
+				strInputFilePath = System.IO.Path.GetFileName(strInputFilePath)
 
                 ' Cache the list of input files now before starting
 
