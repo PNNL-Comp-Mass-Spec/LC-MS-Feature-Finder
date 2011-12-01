@@ -4,8 +4,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UMCCreation", "UMCCreationD
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FeatureFinder", "FeatureFinder.csproj", "{1B6D6886-FC23-4D05-BF60-2F0DA74A7717}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UMCManipulation", "UMCManipulation\UMCManipulation.csproj", "{C1A9685D-F6E7-4FFB-9535-34CA76CE9718}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -15,8 +13,6 @@ Global
 		{8A102398-56CC-4AEE-A09C-B98741CB6ECA}.Debug|Mixed Platforms.Build.0 = Debug|Win32
 		{1B6D6886-FC23-4D05-BF60-2F0DA74A7717}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
 		{1B6D6886-FC23-4D05-BF60-2F0DA74A7717}.Debug|Mixed Platforms.Build.0 = Debug|x86
-		{C1A9685D-F6E7-4FFB-9535-34CA76CE9718}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
-		{C1A9685D-F6E7-4FFB-9535-34CA76CE9718}.Debug|Mixed Platforms.Build.0 = Debug|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -110,10 +110,8 @@
       <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
       <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
     </Reference>
-    <Reference Include="UMCManipulation, Version=1.0.2497.27026, Culture=neutral, PublicKeyToken=null">
+    <Reference Include="UMCManipulation, Version=1.0.4351.36822, Culture=neutral, PublicKeyToken=null">
       <HintPath>UMCManipulation.dll</HintPath>
-      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
-      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
     </Reference>
   </ItemGroup>
   <ItemGroup>
