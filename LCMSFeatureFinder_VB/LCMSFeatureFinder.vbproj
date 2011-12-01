@@ -101,9 +101,9 @@
     <Reference Include="System.Xml">
       <Name>System.XML</Name>
     </Reference>
-    <Reference Include="UMCManipulation">
-      <Name>UMCManipulation</Name>
-      <HintPath>UMCCreationDLL\UMCManipulation.dll</HintPath>
+    <Reference Include="UMCManipulation, Version=1.0.2497.27026, Culture=neutral">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\UMCCreationDLL\UMCManipulation.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

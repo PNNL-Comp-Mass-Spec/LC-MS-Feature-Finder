@@ -4,6 +4,7 @@ Version 1.1.4351; November 30, 2011
 	- Added support for option RequireMatchingChargeState in the Settings.ini file
 		- Set to True to require that members of an LCMS Feature must have the same charge state
 	- Updated to .NET 4
+	- New version of UMCCreation.dll and UMCManipulation.dll that are compiled with .NET 4
 
 Version 1.0.3147; August 15, 2008
 	- Expanded to support IMS Drift time
