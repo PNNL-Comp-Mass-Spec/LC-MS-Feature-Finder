@@ -351,7 +351,7 @@ Public Class clsLCMSFeatureFinder
         Dim blnColumnMappingDefined As Boolean
         Dim intColumnMapping() As Integer
 
-		Dim objFeatures() As UMCManipulation.clsUMC
+		Dim objFeatures() As UMCCreation.clsUMC
         Dim intIsotopePeaksIndex() As Integer
         Dim intUMCIndex() As Integer
 
@@ -538,7 +538,7 @@ Public Class clsLCMSFeatureFinder
 
     End Function
 
-    Public Function FindLCMSFeaturesFromMemory(ByRef objFeatures() As UMCManipulation.clsUMC, ByRef intIsotopePeaksIndex() As Integer, ByRef intUMCIndex() As Integer) As Boolean
+    Public Function FindLCMSFeaturesFromMemory(ByRef objFeatures() As UMCCreation.clsUMC, ByRef intIsotopePeaksIndex() As Integer, ByRef intUMCIndex() As Integer) As Boolean
         ' Populate mIsotopePeaks prior to calling this function, either by calling FindLCMSFeaturesFromFile
         '  or using AddIsotopePeak()
         ' This function will set the UMCCreator options using mFeatureFindingOptions

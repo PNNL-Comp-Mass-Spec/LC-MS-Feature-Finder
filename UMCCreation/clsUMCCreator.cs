@@ -549,15 +549,15 @@ namespace UMCCreation
                 wt_ims_drift_time, use_cs);
         }
 
-        public UMCManipulation.clsUMC[] GetUMCs()
+        public clsUMC[] GetUMCs()
         {
             int numUmcs = mobj_umc_creator.GetNumUmcs();
-            UMCManipulation.clsUMC[] arr_umcs = new UMCManipulation.clsUMC[numUmcs];
+            clsUMC[] arr_umcs = new clsUMC[numUmcs];
 
             for (int umcNum = 0; umcNum < numUmcs; umcNum++)
             {
                 UMC umc = mobj_umc_creator.mvect_umcs[umcNum];
-                UMCManipulation.clsUMC newUmc = new UMCManipulation.clsUMC();
+                clsUMC newUmc = new clsUMC();
                 newUmc.mdbl_abundance = umc.mdbl_sum_abundance;
 
                 newUmc.mdbl_class_rep_mz = (double) umc.mdbl_class_rep_mz;

@@ -1,6 +1,6 @@
 using System;
 
-namespace UMCManipulation
+namespace UMCCreation
 {
 	/// <summary>
 	/// Class used for sorting pairs of key, value pairs based on key.

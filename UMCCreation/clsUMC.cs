@@ -1,6 +1,6 @@
 using System;
 
-namespace UMCManipulation
+namespace UMCCreation
 {
 	/// <summary>
 	/// Summary description for clsUMC.

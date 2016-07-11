@@ -40,18 +40,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="clsClusterMassTagMatch.cs" />
+    <Compile Include="clsClusterMatches.cs" />
+    <Compile Include="clsClusters.cs" />
+    <Compile Include="clsMassTags.cs" />
+    <Compile Include="clsPair.cs" />
+    <Compile Include="clsUMC.cs" />
     <Compile Include="clsUMCCreator.cs" />
+    <Compile Include="clsUMCData.cs" />
     <Compile Include="IniReader.cs" />
     <Compile Include="IsotopePeak.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UMC.cs" />
     <Compile Include="UMCCreator.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\UMCManipulation\UMCManipulation.csproj">
-      <Project>{c1a9685d-f6e7-4ffb-9535-34ca76ce9718}</Project>
-      <Name>UMCManipulation</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

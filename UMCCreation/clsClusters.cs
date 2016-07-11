@@ -1,7 +1,7 @@
 using System;
 using System.Collections ; 
 
-namespace UMCManipulation
+namespace UMCCreation
 {
 	public enum enmClusterRepresentative { MEAN = 0, MEDIAN} ; 
 	public enum enmClusterIntensity {MAX_PER_DATASET = 0, SUM_PER_DATASET} ; 

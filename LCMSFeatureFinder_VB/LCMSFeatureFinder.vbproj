@@ -154,10 +154,6 @@
       <Project>{7c9da11d-b530-4a63-90a0-41ca6c1ec5fd}</Project>
       <Name>UMCCreation</Name>
     </ProjectReference>
-    <ProjectReference Include="..\UMCManipulation\UMCManipulation.csproj">
-      <Project>{c1a9685d-f6e7-4ffb-9535-34ca76ce9718}</Project>
-      <Name>UMCManipulation</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
