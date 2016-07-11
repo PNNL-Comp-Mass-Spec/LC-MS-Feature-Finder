@@ -9,13 +9,10 @@ namespace UMCCreation
 	/// <summary>
 	/// Summary description for clsClusters.
 	/// </summary>
-	public class clsClusters
+	public abstract class clsClusters
 	{
-		public clsUMCData mobj_umc_data ; 
-		private int mint_num_clusters ; 
-		private double mdbl_mass_tolerance ;
-		private double mdbl_net_tolerance ; 
-		private int [] marr_dataset_num ; 
+		public clsUMCData mobj_umc_data ;
+	    private int [] marr_dataset_num ; 
 		public double [] marr_mass ;
 		public double [] marr_mass_calibrated ;
 		public int [] marr_scans ; 
@@ -33,7 +30,7 @@ namespace UMCCreation
 		enmClusterRepresentative menm_cluster_representative ; 
 		enmClusterIntensity menm_cluster_intensity ;
 
-		public clsClusters()
+	    protected clsClusters()
 		{
 			//
 			// TODO: Add constructor logic here
@@ -45,7 +42,7 @@ namespace UMCCreation
 
 		public void Clear()
 		{
-			mint_num_clusters = 0 ; 
+			NumClusters = 0 ; 
 			marr_mass = null ; 
 			marr_scans = null ; 
 			marr_nets = null ; 
@@ -60,69 +57,39 @@ namespace UMCCreation
 		}
 
 
-		public clsClusters(clsUMCData umc_data)
+	    protected clsClusters(clsUMCData umc_data)
 		{
 			mobj_umc_data = umc_data ; 
 		}
 
-		public double MassTolerance
-		{
-			get
-			{
-				return mdbl_mass_tolerance ; 
-			}
-			set
-			{
-				mdbl_mass_tolerance = value ; 
-			}
-		}
+		public double MassTolerance { get; set; }
 
-		public double NETTolerance
-		{
-			get
-			{
-				return mdbl_net_tolerance ; 
-			}
-			set
-			{
-				mdbl_net_tolerance = value ; 
-			}
-		}
-		
-		public int NumClusters
-		{
-			get
-			{
-				return mint_num_clusters ; 
-			}
-			set
-			{
-				mint_num_clusters = value ; 
-			}
-		}
+	    public double NETTolerance { get; set; }
 
-		public void CalculateClusterToUMCMaps()
+	    public int NumClusters { get; set; }
+
+	    public void CalculateClusterToUMCMaps()
 		{
-			int num_datasets = mobj_umc_data.NumDatasets ; 
+			var num_datasets = mobj_umc_data.NumDatasets ; 
 
 
-			marr_mass = new double [mint_num_clusters] ; 
-			marr_mass_calibrated = new double [mint_num_clusters] ; 
-			marr_scans = new int [mint_num_clusters] ; 
-			marr_nets = new double [mint_num_clusters] ; 
-			marr_charges = new int [mint_num_clusters] ; 
+			marr_mass = new double [NumClusters] ; 
+			marr_mass_calibrated = new double [NumClusters] ; 
+			marr_scans = new int [NumClusters] ; 
+			marr_nets = new double [NumClusters] ; 
+			marr_charges = new int [NumClusters] ; 
 
 
 			marr_dataset_num = new int [mobj_umc_data.NumUMCS] ; 
 
-			for (int dataset_num = 0 ; dataset_num < num_datasets ; dataset_num++)
+			for (var dataset_num = 0 ; dataset_num < num_datasets ; dataset_num++)
 			{
 				int start_index = 0 , stop_index = 0 ; 
 				mobj_umc_data.GetDataIndex(dataset_num, ref start_index, ref stop_index) ; 
-				for (int index = start_index ; index < stop_index ; index++)
+				for (var index = start_index ; index < stop_index ; index++)
 				{
-					clsPair pair = new clsPair() ; 
-					int cluster_num = marr_umc_2_cluster[index] ; 
+					var pair = new clsPair() ; 
+					var cluster_num = marr_umc_2_cluster[index] ; 
 					pair.Set(cluster_num, index) ; 
 					marr_clusters_2_umcs.Add(pair) ; 
 					marr_dataset_num[index] = dataset_num ; 
@@ -134,29 +101,28 @@ namespace UMCCreation
 
 		public void CalculateStatistics()
 		{
-			int num_datasets = mobj_umc_data.NumDatasets ; 
-			marr_cluster_intensity = new double [mint_num_clusters*num_datasets] ; 
-			marr_cluster_main_member = new int [mint_num_clusters*num_datasets] ; 
+			var num_datasets = mobj_umc_data.NumDatasets ; 
+			marr_cluster_intensity = new double [NumClusters*num_datasets] ; 
+			marr_cluster_main_member = new int [NumClusters*num_datasets] ; 
 
-			for (int index = 0 ; index < mint_num_clusters*num_datasets ; index++)
+			for (var index = 0 ; index < NumClusters*num_datasets ; index++)
 			{
 				marr_cluster_intensity[index] = 0 ; 
 				marr_cluster_main_member[index] = -1 ; 
 			}
 
-			ArrayList mzs = new ArrayList() ; 
-			ArrayList scans = new ArrayList() ; 
-			ArrayList nets = new ArrayList() ; 
-			ArrayList charges = new ArrayList() ; 
+			var mzs = new ArrayList() ; 
+			var scans = new ArrayList() ; 
+			var nets = new ArrayList() ; 
+			var charges = new ArrayList() ; 
 
 			// Go through each cluster. 
-			int num_elements = marr_clusters_2_umcs.Count ; 
+			var num_elements = marr_clusters_2_umcs.Count ; 
 			if (num_elements == 0)
 				return ;
 
-			clsUMC umc ; 
-			clsPair pair = (clsPair) marr_clusters_2_umcs[0] ; 
-			int last_cluster_num = (int) pair.mint_key ;
+		    var pair = (clsPair) marr_clusters_2_umcs[0] ; 
+			var last_cluster_num = pair.mint_key ;
 			int num_nonzero ; 
 			double mz ; 
 			int charge, avg_charge ; 
@@ -167,11 +133,11 @@ namespace UMCCreation
 			int pt_num ; 
 
  
-			for (int element_num = 0 ; element_num < num_elements ; element_num++)
+			for (var element_num = 0 ; element_num < num_elements ; element_num++)
 			{
 
 				pair = (clsPair) marr_clusters_2_umcs[element_num] ;
-				if ((int) pair.mint_key != last_cluster_num)
+				if (pair.mint_key != last_cluster_num)
 				{
 					num_nonzero = mzs.Count ; 
 
@@ -239,21 +205,21 @@ namespace UMCCreation
 							break ; 
 					}
 
-					last_cluster_num = (int) pair.mint_key ;
+					last_cluster_num = pair.mint_key ;
 					mzs.Clear() ; 
 					scans.Clear() ;
 					nets.Clear() ; 
 					charges.Clear() ; 
 				}
-				int index = (int)pair.mobj_val ; 
-				umc = mobj_umc_data.marr_umcs[index] ; 
+				var index = (int)pair.mobj_val ; 
+				var umc = mobj_umc_data.marr_umcs[index]; 
 
-				double rep_mass = umc.mdbl_mono_mass_calibrated ; 
-				int rep_scan = umc.mint_scan_aligned ; 
-				double rep_net = umc.mdbl_net ; 
-				double intensity = umc.mdbl_abundance ; 
+				var rep_mass = umc.mdbl_mono_mass_calibrated ; 
+				var rep_scan = umc.mint_scan_aligned ; 
+				var rep_net = umc.mdbl_net ; 
+				var intensity = umc.mdbl_abundance ; 
 
-				int pt_index = last_cluster_num * num_datasets + marr_dataset_num[index] ; 
+				var pt_index = last_cluster_num * num_datasets + marr_dataset_num[index] ; 
 
 				if(marr_cluster_intensity[pt_index] < intensity)
 				{
@@ -347,7 +313,7 @@ namespace UMCCreation
 					break ; 
 			}
 
-			last_cluster_num = (int) pair.mint_key ;
+			last_cluster_num = pair.mint_key ;
 			mzs.Clear() ; 
 			scans.Clear() ;
 			nets.Clear() ; 

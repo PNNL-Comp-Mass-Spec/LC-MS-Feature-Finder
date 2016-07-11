@@ -1,5 +1,9 @@
 LCMS Feature Finder Revision History
 
+Version 1.2.6036; July 11, 2016
+	- Now using C# based UMCCreation.dll
+	- No longer uses UMCManipulation.dll
+
 Version 1.1.4351; November 30, 2011
 	- Added support for option RequireMatchingChargeState in the Settings.ini file
 		- Set to True to require that members of an LCMS Feature must have the same charge state

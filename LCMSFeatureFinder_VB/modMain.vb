@@ -1,5 +1,7 @@
 Option Strict On
 
+Imports System.IO
+Imports System.Reflection
 ' This module reads a text file with mass and intensity data for MS spectra
 ' and determines the LC-MS features present using UMCCreation.dll
 '
@@ -27,11 +29,10 @@ Option Strict On
 
 Module modMain
 
-	Public Const PROGRAM_DATE As String = "November 30, 2011"
+	Public Const PROGRAM_DATE As String = "July 11, 2016"
 
     Private mInputDataFilePath As String
     Private mOutputFileOrFolderPath As String
-    Private mDatasetNum As Integer
 
     Private mParameterFilePath As String            ' Optional
 
@@ -52,7 +53,6 @@ Module modMain
 
         mInputDataFilePath = String.Empty
         mOutputFileOrFolderPath = String.Empty
-        mDatasetNum = 0
 
         mParameterFilePath = String.Empty
 
@@ -62,8 +62,8 @@ Module modMain
                 If SetOptionsUsingCommandLineParameters(objParseCommandLine) Then blnProceed = True
             End If
 
-            If objParseCommandLine.ParameterCount = 0 OrElse Not blnProceed OrElse _
-               objParseCommandLine.NeedToShowHelp OrElse _
+            If objParseCommandLine.ParameterCount = 0 OrElse Not blnProceed OrElse
+               objParseCommandLine.NeedToShowHelp OrElse
                mInputDataFilePath.Length = 0 Then
                 ShowProgramHelp()
                 intReturnCode = -1
@@ -91,9 +91,9 @@ Module modMain
 
             End If
 
-        Catch ex As System.Exception
+        Catch ex As Exception
             If mQuietMode Then
-                Throw ex
+                Throw
             Else
                 MsgBox("Error occurred: " & ControlChars.NewLine & ex.Message, MsgBoxStyle.Exclamation Or MsgBoxStyle.OKOnly, "Error")
             End If
@@ -104,11 +104,11 @@ Module modMain
 
     End Function
 
-    Private Function SetOptionsUsingCommandLineParameters(ByVal objParseCommandLine As clsParseCommandLine) As Boolean
+    Private Function SetOptionsUsingCommandLineParameters(objParseCommandLine As clsParseCommandLine) As Boolean
         ' Returns True if no problems; otherwise, returns false
 
 		Dim strValue As String = String.Empty
-        Dim strValidParameters() As String = New String() {"I", "O", "D", "P", "Q"}
+        Dim strValidParameters = New String() {"I", "O", "P", "Q"}
 
         Try
             ' Make sure no invalid parameters are present
@@ -120,13 +120,6 @@ Module modMain
                 With objParseCommandLine
                     If .RetrieveValueForParameter("I", strValue) Then mInputDataFilePath = strValue
                     If .RetrieveValueForParameter("O", strValue) Then mOutputFileOrFolderPath = strValue
-                    If .RetrieveValueForParameter("D", strValue) Then
-                        Try
-                            mDatasetNum = Integer.Parse(strValue)
-                        Catch ex As System.Exception
-                            mDatasetNum = 0
-                        End Try
-                    End If
 
                     If .RetrieveValueForParameter("P", strValue) Then mParameterFilePath = strValue
 
@@ -136,12 +129,13 @@ Module modMain
                 Return True
             End If
 
-        Catch ex As System.Exception
+        Catch ex As Exception
             If mQuietMode Then
-                Throw New System.Exception("Error parsing the command line parameters", ex)
+                Throw New Exception("Error parsing the command line parameters", ex)
             Else
                 MsgBox("Error parsing the command line parameters: " & ControlChars.NewLine & ex.Message, MsgBoxStyle.Exclamation Or MsgBoxStyle.OKOnly, "Error")
             End If
+            return false
         End Try
 
     End Function
@@ -152,12 +146,12 @@ Module modMain
 		Try
 
 			strSyntax = "This program will read a text file with mass and intensity data for MS spectra and determine the LC-MS features present using UMCCreation.dll." & ControlChars.NewLine & ControlChars.NewLine
-			strSyntax &= "Program syntax:" & ControlChars.NewLine & System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location)
+			strSyntax &= "Program syntax:" & ControlChars.NewLine & Path.GetFileName(Assembly.GetExecutingAssembly().Location)
 			strSyntax &= " /I:InputFileName.txt [/O:OutputFileName.txt]" & ControlChars.NewLine & ControlChars.NewLine
 
-			strSyntax &= "The input file name is required. If the filename contains spaces, then surround it with double quotes. " & _
-						 "If the output file name is not supplied, then it will be auto-generated as InputFileName_Features.txt. " & _
-						 "This program will look for a .Ini file with the same name as the input file, but with extension .Ini  " & _
+			strSyntax &= "The input file name is required. If the filename contains spaces, then surround it with double quotes. " &
+						 "If the output file name is not supplied, then it will be auto-generated as InputFileName_Features.txt. " &
+						 "This program will look for a .Ini file with the same name as the input file, but with extension .Ini  " &
 						 "If found, then it reads the .Ini file to load the weight values to use when clustering the data." & ControlChars.NewLine & ControlChars.NewLine
 
 			strSyntax &= "Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2007" & ControlChars.NewLine
@@ -168,7 +162,7 @@ Module modMain
 
 			Console.WriteLine(strSyntax)
 
-		Catch ex As System.Exception
+		Catch ex As Exception
 			Console.WriteLine("Error displaying the program syntax: " & ex.Message)
 		End Try
 

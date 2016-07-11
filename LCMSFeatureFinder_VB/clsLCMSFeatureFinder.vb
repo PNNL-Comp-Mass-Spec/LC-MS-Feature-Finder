@@ -1,5 +1,11 @@
 Option Strict On
 
+Imports System.IO
+Imports System.Reflection
+Imports System.Runtime.InteropServices
+Imports System.Threading
+Imports System.Windows.Forms
+Imports UMCCreation
 ' This class reads a text file with mass and intensity data for MS spectra
 ' and determines the LC-MS features present using UMCCreation.dll
 '
@@ -27,11 +33,11 @@ Option Strict On
 
 Public Class clsLCMSFeatureFinder
     Public Event ProgressReset()
-    Public Event ProgressChanged(ByVal taskDescription As String, ByVal percentComplete As Single)     ' PercentComplete ranges from 0 to 100, but can contain decimal percentage values
+    Public Event ProgressChanged(taskDescription As String, percentComplete As Single)     ' PercentComplete ranges from 0 to 100, but can contain decimal percentage values
     Public Event ProgressComplete()
 
     Public Sub New()
-        mFileDate = modMain.PROGRAM_DATE
+        mFileDate = PROGRAM_DATE
         InitializeLocalVariables()
     End Sub
 
@@ -143,10 +149,10 @@ Public Class clsLCMSFeatureFinder
     Protected mAbortProcessing As Boolean
 
     Protected mIsotopePeaksCount As Integer
-    Protected mIsotopePeaks() As UMCCreation.clsIsotopePeak
+    Protected mIsotopePeaks() As clsIsotopePeak
     Protected mIsotopePeaksMapToIndexInDataSource() As Integer      ' Parallel to mIsotopePeaks
 
-    Protected mUMCCreator As UMCCreation.clsUMCCreator
+    Protected mUMCCreator As clsUMCCreator
 
     ' These values are useful when calling this program with just a narrow range of data points.  We need to know
     '  the min and max scan range so that we can convert from scan to NET, and if we only have a narrow range of points
@@ -161,7 +167,7 @@ Public Class clsLCMSFeatureFinder
         Get
             Return mAbortProcessing
         End Get
-        Set(ByVal Value As Boolean)
+        Set(Value As Boolean)
             mAbortProcessing = Value
         End Set
     End Property
@@ -189,7 +195,7 @@ Public Class clsLCMSFeatureFinder
         Get
             Return mShowMessages
         End Get
-        Set(ByVal Value As Boolean)
+        Set(Value As Boolean)
             mShowMessages = Value
         End Set
     End Property
@@ -201,17 +207,17 @@ Public Class clsLCMSFeatureFinder
     End Property
 #End Region
 
-    Public Function AddIsotopePeak(ByVal intScanNumber As Integer, _
-                                    ByVal intIndexInDataSource As Integer, _
-                                    ByVal dblAbundance As Double, _
-                                    ByVal dblMonoMassPlus2DaAbundance As Double, _
-                                    ByVal dblMonoisotopicMass As Double, _
-                                    ByVal dblAverageMass As Double, _
-                                    ByVal dblMassOfMostAbundant As Double, _
-                                    ByVal dblMZOfMostAbu As Double, _
-                                    ByVal intCharge As Short, _
-                                    ByVal sngFit As Single, _
-                                    ByVal sngIMSDriftTime As Single) As Boolean
+    Public Sub AddIsotopePeak(intScanNumber As Integer,
+                                    intIndexInDataSource As Integer,
+                                    dblAbundance As Double,
+                                    dblMonoMassPlus2DaAbundance As Double,
+                                    dblMonoisotopicMass As Double,
+                                    dblAverageMass As Double,
+                                    dblMassOfMostAbundant As Double,
+                                    dblMZOfMostAbu As Double,
+                                    intCharge As Short,
+                                    sngFit As Single,
+                                    sngIMSDriftTime As Single)
 
         If mIsotopePeaks Is Nothing Then ClearIsotopePeaks()
 
@@ -220,15 +226,15 @@ Public Class clsLCMSFeatureFinder
             ReDim Preserve mIsotopePeaksMapToIndexInDataSource(mIsotopePeaksCount * 2 - 1)
         End If
 
-        mIsotopePeaks(mIsotopePeaksCount) = New UMCCreation.clsIsotopePeak
+        Dim originalIndex = mIsotopePeaksCount
+
+        mIsotopePeaks(originalIndex) = New clsIsotopePeak(originalIndex)
         With mIsotopePeaks(mIsotopePeaksCount)
             .mint_lc_scan = intScanNumber
 
-            .mint_original_index = mIsotopePeaksCount
-
-            ' Note: the mint_original_index value must be 0 for the first isotope peak, and then increment up from there
+            ' Note: the originalIndex value must be 0 for the first isotope peak, and then increment up from there
             ' The following array is used to track the intIndexInDataSource value for each entry in mIsotopePeaks
-            mIsotopePeaksMapToIndexInDataSource(mIsotopePeaksCount) = intIndexInDataSource
+            mIsotopePeaksMapToIndexInDataSource(originalIndex) = intIndexInDataSource
 
             .mdbl_abundance = dblAbundance
             ' .mdbl_mono_abundance = GetColumnValueDbl(strSplitLine, intColumnMapping(eInputFileColumnNames.MonoMassAbundance), 0)
@@ -245,13 +251,13 @@ Public Class clsLCMSFeatureFinder
         End With
         mIsotopePeaksCount += 1
 
-    End Function
+    End Sub
 
-    Protected Sub AutoLoadOptions(ByVal strInputFilePath As String)
+    Protected Sub AutoLoadOptions(strInputFilePath As String)
         ' ToDo: Look for a .Ini file that matches strInputFilePath
         ' Open it and parse the settings present, updatingmFeatureFindingOptions
 
-		Dim strIniFilePath As String = String.Empty
+        Dim strIniFilePath As String = String.Empty
         Dim strInputFolderPath As String
 
         Dim objIniFileReader As clsIniFileReader
@@ -262,9 +268,9 @@ Public Class clsLCMSFeatureFinder
             End If
 
             strInputFolderPath = GetParentFolderPathForFile(strInputFilePath)
-            strIniFilePath = System.IO.Path.Combine(strInputFolderPath, System.IO.Path.GetFileNameWithoutExtension(strInputFilePath) & ".ini")
+            strIniFilePath = Path.Combine(strInputFolderPath, Path.GetFileNameWithoutExtension(strInputFilePath) & ".ini")
 
-            If System.IO.File.Exists(strIniFilePath) Then
+            If File.Exists(strIniFilePath) Then
                 ' Read the file
                 objIniFileReader = New clsIniFileReader(strIniFilePath)
 
@@ -290,19 +296,19 @@ Public Class clsLCMSFeatureFinder
                         .MinScan = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "MinScan", .MinScan)
                         .MaxScan = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "MaxScan", .MaxScan)
 
-						.MinScan = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "LCMinScan", .MinScan)
-						.MaxScan = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "LCMaxScan", .MaxScan)
+                        .MinScan = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "LCMinScan", .MinScan)
+                        .MaxScan = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "LCMaxScan", .MaxScan)
 
                         .MinFeatureLengthPoints = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "MinFeatureLengthPoints", .MinFeatureLengthPoints)
 
-						.RequireMatchingChargeState = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "RequireMatchingChargeState", .RequireMatchingChargeState)
-						.RequireMatchingChargeState = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "UseCharge", .RequireMatchingChargeState)
+                        .RequireMatchingChargeState = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "RequireMatchingChargeState", .RequireMatchingChargeState)
+                        .RequireMatchingChargeState = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "UseCharge", .RequireMatchingChargeState)
                     End With
                 End If
 
             End If
-        Catch ex As System.Exception
-            LogErrors("AutoLoadOptions", "Error reading the .Ini file(" & System.IO.Path.GetFileName(strIniFilePath) & ")", ex, False, False, True, eLCMSFeatureFinderErrorCodes.InputFileReadError)
+        Catch ex As Exception
+            LogErrors("AutoLoadOptions", "Error reading the .Ini file(" & Path.GetFileName(strIniFilePath) & ")", ex, False, False, True, eLCMSFeatureFinderErrorCodes.InputFileReadError)
         End Try
 
     End Sub
@@ -313,20 +319,17 @@ Public Class clsLCMSFeatureFinder
         ReDim mIsotopePeaksMapToIndexInDataSource(intInitialPeakReserveCount - 1)
     End Sub
 
-    Protected Function FindLCMSFeaturesFromFile(ByVal strInputFilePath As String, ByVal strFeaturesOutputFilePath As String, ByVal strFeatureToPeakMapFilePath As String) As Boolean
+    Protected Function FindLCMSFeaturesFromFile(strInputFilePath As String, strFeaturesOutputFilePath As String, strFeatureToPeakMapFilePath As String) As Boolean
         ' Returns True if Success, False if failure
         ' Note: This function assumes strInputFilePath exists
 
         Const MIN_COLUMN_COUNT As Integer = 3
-        Const INITIAL_PEAKS_LENGTH As Integer = 1000
-        Const UMCCREATOR_USES_NET As Boolean = True
 
         Dim cColumnDelimiter As Char
 
-        Dim ioFile As System.IO.FileInfo
-        Dim srInFile As System.IO.StreamReader
-        Dim srOutFileFeatures As System.IO.StreamWriter
-        Dim srOutFileFeatureToIsotopePeakMap As System.IO.StreamWriter
+        Dim ioFile As FileInfo
+        Dim srOutFileFeatures As StreamWriter
+        Dim srOutFileFeatureToIsotopePeakMap As StreamWriter
 
         Dim strMessage As String
         Dim strLineIn As String
@@ -349,11 +352,7 @@ Public Class clsLCMSFeatureFinder
         Dim sngIMSDriftTime As Single
 
         Dim blnColumnMappingDefined As Boolean
-        Dim intColumnMapping() As Integer
-
-		Dim objFeatures() As UMCCreation.clsUMC
-        Dim intIsotopePeaksIndex() As Integer
-        Dim intUMCIndex() As Integer
+        Dim intColumnMapping() As Integer = Nothing
 
         Dim blnSuccess As Boolean
 
@@ -361,129 +360,130 @@ Public Class clsLCMSFeatureFinder
         blnSuccess = True
 
         Try
-            strMessage = "Reading data file " & System.IO.Path.GetFileName(strInputFilePath)
+            strMessage = "Reading data file " & Path.GetFileName(strInputFilePath)
             Console.WriteLine(strMessage & " ")
             UpdateProgress(strMessage, 0)
 
             ' Obtain the full path to the file
-            ioFile = New System.IO.FileInfo(strInputFilePath)
+            ioFile = New FileInfo(strInputFilePath)
 
             ' Open a handle to the data file
-            srInFile = New System.IO.StreamReader(New System.IO.FileStream(ioFile.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+            Using srInFile = New StreamReader(New FileStream(ioFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-            ' Initialize the column mappings to -1
-            blnColumnMappingDefined = False
-            InitializeColumnMappings(intColumnMapping)
+                ' Initialize the column mappings to -1
+                blnColumnMappingDefined = False
+                InitializeColumnMappings(intColumnMapping)
 
-            ' Initialize define the column delimiter as a tab
-            cColumnDelimiter = ControlChars.Tab
-            If System.IO.Path.GetExtension(strInputFilePath).ToLower = ".csv" Then
-                ' The file is a CSV file; use a comma as the delimiter
-                cColumnDelimiter = ","c
-            End If
+                ' Initialize define the column delimiter as a tab
+                cColumnDelimiter = ControlChars.Tab
+                If Path.GetExtension(strInputFilePath).ToLower = ".csv" Then
+                    ' The file is a CSV file; use a comma as the delimiter
+                    cColumnDelimiter = ","c
+                End If
 
-            ' Initialize the array that holds the isotope information
-            ClearIsotopePeaks()
+                ' Initialize the array that holds the isotope information
+                ClearIsotopePeaks()
 
-            intDataLinesRead = 0
-            Do While srInFile.Peek >= 0
-                strLineIn = srInFile.ReadLine
+                intDataLinesRead = 0
+                Do While srInFile.Peek >= 0
+                    strLineIn = srInFile.ReadLine
 
-                If Not strLineIn Is Nothing AndAlso strLineIn.Length > 0 Then
-                    strSplitLine = strLineIn.Split(cColumnDelimiter)
+                    If Not strLineIn Is Nothing AndAlso strLineIn.Length > 0 Then
+                        strSplitLine = strLineIn.Split(cColumnDelimiter)
 
-                    If Not strSplitLine Is Nothing AndAlso strSplitLine.Length >= MIN_COLUMN_COUNT Then
-                        ' If this is the first row, then see if it contains column headers
-                        ' If it does, then read them to update the column mapping
+                        If Not strSplitLine Is Nothing AndAlso strSplitLine.Length >= MIN_COLUMN_COUNT Then
+                            ' If this is the first row, then see if it contains column headers
+                            ' If it does, then read them to update the column mapping
 
-                        If Not blnColumnMappingDefined Then
-                            ' If the first column is not a number, then define the mappings based on the column names
-                            ' If it is a number, then use the default column mappings
-                            If IsNumber(strSplitLine(0)) Then
-                                DefineDefaultColumnMappings(intColumnMapping)
-                            Else
-                                ParseInputFileColumnNames(strSplitLine, intColumnMapping)
-                            End If
-                            blnColumnMappingDefined = True
-                        End If
-
-                        ' Parse strSplitLine() if the first column is a number
-                        If IsNumber(strSplitLine(0)) Then
-                            intScanNumber = GetColumnValueInt(strSplitLine, intColumnMapping(eInputFileColumnNames.Scan), -1)
-                            If intScanNumber >= 0 Then
-                                If intColumnMapping(eInputFileColumnNames.Index) >= 0 Then
-                                    intIndexInDataSource = GetColumnValueInt(strSplitLine, intColumnMapping(eInputFileColumnNames.Index), -1)
+                            If Not blnColumnMappingDefined Then
+                                ' If the first column is not a number, then define the mappings based on the column names
+                                ' If it is a number, then use the default column mappings
+                                If IsNumber(strSplitLine(0)) Then
+                                    DefineDefaultColumnMappings(intColumnMapping)
                                 Else
-                                    intIndexInDataSource = intDataLinesRead
+                                    ParseInputFileColumnNames(strSplitLine, intColumnMapping)
                                 End If
+                                blnColumnMappingDefined = True
+                            End If
 
-                                dblAbundance = GetColumnValueDbl(strSplitLine, intColumnMapping(eInputFileColumnNames.Abundance), 0)
-                                ' .mdbl_mono_abundance = GetColumnValueDbl(strSplitLine, intColumnMapping(eInputFileColumnNames.MonoMassAbundance), 0)
-                                dblMonoMassPlus2DaAbundance = GetColumnValueDbl(strSplitLine, intColumnMapping(eInputFileColumnNames.MonoMassPlus2DaAbundance), 0)
-                                dblMonoisotopicMass = GetColumnValueDbl(strSplitLine, intColumnMapping(eInputFileColumnNames.MonoisotopicMass), 0)
-                                dblAverageMass = GetColumnValueDbl(strSplitLine, intColumnMapping(eInputFileColumnNames.AverageMass), 0)
-                                dblMassOfMostAbundant = GetColumnValueDbl(strSplitLine, intColumnMapping(eInputFileColumnNames.MassOfMostAbundant), 0)
-                                dblMZOfMostAbu = GetColumnValueSng(strSplitLine, intColumnMapping(eInputFileColumnNames.MZOfMostAbu), 0)
-                                intCharge = CShort(GetColumnValueInt(strSplitLine, intColumnMapping(eInputFileColumnNames.Charge), 1))
-                                sngFit = GetColumnValueSng(strSplitLine, intColumnMapping(eInputFileColumnNames.Fit), 0)
-                                sngIMSDriftTime = GetColumnValueSng(strSplitLine, intColumnMapping(eInputFileColumnNames.IMSDriftTime), 0)
+                            ' Parse strSplitLine() if the first column is a number
+                            If IsNumber(strSplitLine(0)) Then
+                                intScanNumber = GetColumnValueInt(strSplitLine, intColumnMapping(eInputFileColumnNames.Scan), -1)
+                                If intScanNumber >= 0 Then
+                                    If intColumnMapping(eInputFileColumnNames.Index) >= 0 Then
+                                        intIndexInDataSource = GetColumnValueInt(strSplitLine, intColumnMapping(eInputFileColumnNames.Index), -1)
+                                    Else
+                                        intIndexInDataSource = intDataLinesRead
+                                    End If
 
-                                AddIsotopePeak(intScanNumber, intIndexInDataSource, dblAbundance, dblMonoMassPlus2DaAbundance, _
-                                               dblMonoisotopicMass, dblAverageMass, dblMassOfMostAbundant, dblMZOfMostAbu, _
-                                               intCharge, sngFit, sngIMSDriftTime)
+                                    dblAbundance = GetColumnValueDbl(strSplitLine, intColumnMapping(eInputFileColumnNames.Abundance), 0)
+                                    ' .mdbl_mono_abundance = GetColumnValueDbl(strSplitLine, intColumnMapping(eInputFileColumnNames.MonoMassAbundance), 0)
+                                    dblMonoMassPlus2DaAbundance = GetColumnValueDbl(strSplitLine, intColumnMapping(eInputFileColumnNames.MonoMassPlus2DaAbundance), 0)
+                                    dblMonoisotopicMass = GetColumnValueDbl(strSplitLine, intColumnMapping(eInputFileColumnNames.MonoisotopicMass), 0)
+                                    dblAverageMass = GetColumnValueDbl(strSplitLine, intColumnMapping(eInputFileColumnNames.AverageMass), 0)
+                                    dblMassOfMostAbundant = GetColumnValueDbl(strSplitLine, intColumnMapping(eInputFileColumnNames.MassOfMostAbundant), 0)
+                                    dblMZOfMostAbu = GetColumnValueSng(strSplitLine, intColumnMapping(eInputFileColumnNames.MZOfMostAbu), 0)
+                                    intCharge = CShort(GetColumnValueInt(strSplitLine, intColumnMapping(eInputFileColumnNames.Charge), 1))
+                                    sngFit = GetColumnValueSng(strSplitLine, intColumnMapping(eInputFileColumnNames.Fit), 0)
+                                    sngIMSDriftTime = GetColumnValueSng(strSplitLine, intColumnMapping(eInputFileColumnNames.IMSDriftTime), 0)
 
-                                intDataLinesRead += 1
+                                    AddIsotopePeak(intScanNumber, intIndexInDataSource, dblAbundance, dblMonoMassPlus2DaAbundance,
+                                                   dblMonoisotopicMass, dblAverageMass, dblMassOfMostAbundant, dblMZOfMostAbu,
+                                                   intCharge, sngFit, sngIMSDriftTime)
+
+                                    intDataLinesRead += 1
+                                End If
                             End If
                         End If
                     End If
-                End If
-            Loop
+                Loop
+            End Using
 
             ' Verify that one or more isotope peaks were loaded
             If mIsotopePeaksCount = 0 Then
-                LogErrors("FindLCMSFeatures", "Did not find any valid data in the input file (" & System.IO.Path.GetFileName(strInputFilePath) & ")", Nothing, True, False, True, eLCMSFeatureFinderErrorCodes.InputFileReadError)
+                LogErrors("FindLCMSFeatures", "Did not find any valid data in the input file (" & Path.GetFileName(strInputFilePath) & ")", Nothing, True, False, True, eLCMSFeatureFinderErrorCodes.InputFileReadError)
             End If
 
-        Catch ex As System.Exception
-            LogErrors("FindLCMSFeatures", "Error reading the input data file (" & System.IO.Path.GetFileName(strInputFilePath) & ")", ex, False, False, True, eLCMSFeatureFinderErrorCodes.InputFileReadError)
-            Return False
-        Finally
-            If Not srInFile Is Nothing Then
-                srInFile.Close()
-            End If
+        Catch ex As Exception
+            LogErrors("FindLCMSFeatures", "Error reading the input data file (" & Path.GetFileName(strInputFilePath) & ")", ex, False, False, True, eLCMSFeatureFinderErrorCodes.InputFileReadError)
+            Return False      
         End Try
 
         Try
             ' Initialize the output files
-            ioFile = New System.IO.FileInfo(strFeaturesOutputFilePath)
-            srOutFileFeatures = New System.IO.StreamWriter(New System.IO.FileStream(ioFile.FullName, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+            ioFile = New FileInfo(strFeaturesOutputFilePath)
+            srOutFileFeatures = New StreamWriter(New FileStream(ioFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
 
-            strLineout = "Feature_Index" & COLUMN_DELIMITER & _
-                         "Scan" & COLUMN_DELIMITER & _
-                         "Scan_Start" & COLUMN_DELIMITER & _
-                         "Scan_End" & COLUMN_DELIMITER & _
-                         "Scan_Aligned" & COLUMN_DELIMITER & _
-                         "NET" & COLUMN_DELIMITER & _
-                         "Monoisotopic_Mass" & COLUMN_DELIMITER & _
-                         "Monoisotopic_Mass_Calibrated" & COLUMN_DELIMITER & _
-                         "Abundance" & COLUMN_DELIMITER & _
-                         "Class_Rep_MZ" & COLUMN_DELIMITER & _
+            strLineout = "Feature_Index" & COLUMN_DELIMITER &
+                         "Scan" & COLUMN_DELIMITER &
+                         "Scan_Start" & COLUMN_DELIMITER &
+                         "Scan_End" & COLUMN_DELIMITER &
+                         "Scan_Aligned" & COLUMN_DELIMITER &
+                         "NET" & COLUMN_DELIMITER &
+                         "Monoisotopic_Mass" & COLUMN_DELIMITER &
+                         "Monoisotopic_Mass_Calibrated" & COLUMN_DELIMITER &
+                         "Abundance" & COLUMN_DELIMITER &
+                         "Class_Rep_MZ" & COLUMN_DELIMITER &
                          "Class_Rep_Charge"
 
             srOutFileFeatures.WriteLine(strLineout)
 
-            ioFile = New System.IO.FileInfo(strFeatureToPeakMapFilePath)
-            srOutFileFeatureToIsotopePeakMap = New System.IO.StreamWriter(New System.IO.FileStream(ioFile.FullName, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+            ioFile = New FileInfo(strFeatureToPeakMapFilePath)
+            srOutFileFeatureToIsotopePeakMap = New StreamWriter(New FileStream(ioFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
 
-            strLineout = "Feature_Index" & COLUMN_DELIMITER & _
+            strLineout = "Feature_Index" & COLUMN_DELIMITER &
                          "Peak_Index"
 
             srOutFileFeatureToIsotopePeakMap.WriteLine(strLineout)
 
-        Catch ex As System.Exception
-            LogErrors("FindLCMSFeatures", "Error initializing the output file (" & System.IO.Path.GetFileName(strInputFilePath) & ")", ex, False, False, True, eLCMSFeatureFinderErrorCodes.OutputFileWriteError)
+        Catch ex As Exception
+            LogErrors("FindLCMSFeatures", "Error initializing the output file (" & Path.GetFileName(strInputFilePath) & ")", ex, False, False, True, eLCMSFeatureFinderErrorCodes.OutputFileWriteError)
             Return False
         End Try
+
+        Dim objFeatures() As clsUMC = Nothing
+        Dim intIsotopePeaksIndex() As Integer = Nothing
+        Dim intUMCIndex() As Integer = Nothing
 
         ' Perform the work of finding the LC-MS features
         FindLCMSFeaturesFromMemory(objFeatures, intIsotopePeaksIndex, intUMCIndex)
@@ -492,24 +492,24 @@ Public Class clsLCMSFeatureFinder
             ' Write the Features to the output file
             For intIndex = 0 To objFeatures.Length - 1
                 With objFeatures(intIndex)
-                    strLineout = .mint_umc_index.ToString & COLUMN_DELIMITER & _
-                                 .mint_scan.ToString & COLUMN_DELIMITER & _
-                                 .mint_start_scan.ToString & COLUMN_DELIMITER & _
-                                 .mint_end_scan.ToString & COLUMN_DELIMITER & _
-                                 .mint_scan_aligned.ToString & COLUMN_DELIMITER & _
-                                 .mdbl_net.ToString("0.0000") & COLUMN_DELIMITER & _
-                                 ValueToString(.mdbl_mono_mass, 10) & COLUMN_DELIMITER & _
-                                 ValueToString(.mdbl_mono_mass_calibrated, 10) & COLUMN_DELIMITER & _
-                                 ValueToString(.mdbl_abundance, 8) & COLUMN_DELIMITER & _
-                                 ValueToString(.mdbl_class_rep_mz, 10) & COLUMN_DELIMITER & _
+                    strLineout = .mint_umc_index.ToString & COLUMN_DELIMITER &
+                                 .mint_scan.ToString & COLUMN_DELIMITER &
+                                 .mint_start_scan.ToString & COLUMN_DELIMITER &
+                                 .mint_end_scan.ToString & COLUMN_DELIMITER &
+                                 .mint_scan_aligned.ToString & COLUMN_DELIMITER &
+                                 .mdbl_net.ToString("0.0000") & COLUMN_DELIMITER &
+                                 ValueToString(.mdbl_mono_mass, 10) & COLUMN_DELIMITER &
+                                 ValueToString(.mdbl_mono_mass_calibrated, 10) & COLUMN_DELIMITER &
+                                 ValueToString(.mdbl_abundance, 8) & COLUMN_DELIMITER &
+                                 ValueToString(.mdbl_class_rep_mz, 10) & COLUMN_DELIMITER &
                                  .mint_class_rep_charge.ToString
 
                     srOutFileFeatures.WriteLine(strLineout)
                 End With
             Next intIndex
 
-        Catch ex As System.Exception
-            LogErrors("FindLCMSFeatures", "Error writing to the output file (" & System.IO.Path.GetFileName(strFeaturesOutputFilePath) & ")", ex, False, False, True, eLCMSFeatureFinderErrorCodes.InputFileReadError)
+        Catch ex As Exception
+            LogErrors("FindLCMSFeatures", "Error writing to the output file (" & Path.GetFileName(strFeaturesOutputFilePath) & ")", ex, False, False, True, eLCMSFeatureFinderErrorCodes.InputFileReadError)
         Finally
             If Not srOutFileFeatures Is Nothing Then
                 srOutFileFeatures.Close()
@@ -526,8 +526,8 @@ Public Class clsLCMSFeatureFinder
                 srOutFileFeatureToIsotopePeakMap.WriteLine(strLineout)
             Next intIndex
 
-        Catch ex As System.Exception
-            LogErrors("FindLCMSFeatures", "Error writing to the output file (" & System.IO.Path.GetFileName(strFeaturesOutputFilePath) & ")", ex, False, False, True, eLCMSFeatureFinderErrorCodes.InputFileReadError)
+        Catch ex As Exception
+            LogErrors("FindLCMSFeatures", "Error writing to the output file (" & Path.GetFileName(strFeaturesOutputFilePath) & ")", ex, False, False, True, eLCMSFeatureFinderErrorCodes.InputFileReadError)
         Finally
             If Not srOutFileFeatureToIsotopePeakMap Is Nothing Then
                 srOutFileFeatureToIsotopePeakMap.Close()
@@ -538,7 +538,11 @@ Public Class clsLCMSFeatureFinder
 
     End Function
 
-    Public Function FindLCMSFeaturesFromMemory(ByRef objFeatures() As UMCCreation.clsUMC, ByRef intIsotopePeaksIndex() As Integer, ByRef intUMCIndex() As Integer) As Boolean
+    Public Function FindLCMSFeaturesFromMemory(
+      <Out()> ByRef objFeatures() As clsUMC,
+      <Out()> ByRef intIsotopePeaksIndex() As Integer,
+      <Out()> ByRef intUMCIndex() As Integer) As Boolean
+
         ' Populate mIsotopePeaks prior to calling this function, either by calling FindLCMSFeaturesFromFile
         '  or using AddIsotopePeak()
         ' This function will set the UMCCreator options using mFeatureFindingOptions
@@ -550,11 +554,16 @@ Public Class clsLCMSFeatureFinder
             ' Assume success for now
             blnSuccess = True
 
-            If mIsotopePeaks Is Nothing Then
-                LogErrors("FindLCMSFeaturesFromMemory", "mIsotopePeaks is not initialized; unable to continue", Nothing, True, False, False)
-                Return False
-            ElseIf mIsotopePeaksCount = 0 Then
-                LogErrors("FindLCMSFeaturesFromMemory", "mIsotopePeaks is empty; unable to continue", Nothing, True, False, False)
+            If mIsotopePeaks Is Nothing OrElse mIsotopePeaksCount = 0 Then
+                If mIsotopePeaks Is Nothing Then
+                    LogErrors("FindLCMSFeaturesFromMemory", "mIsotopePeaks is not initialized; unable to continue", Nothing, True, False, False)
+                Else
+                    LogErrors("FindLCMSFeaturesFromMemory", "mIsotopePeaks is empty; unable to continue", Nothing, True, False, False)
+                End If
+
+                ReDim objFeatures(-1)
+                ReDim intIsotopePeaksIndex(-1)
+                ReDim intUMCIndex(-1)
                 Return False
             Else
                 ' Shrink mIsotopePeaks to length mIsotopePeaksCount if needed
@@ -566,27 +575,27 @@ Public Class clsLCMSFeatureFinder
 
             ' Use clsUMCCreator to find LC-MS features from the loaded data
             If mUMCCreator Is Nothing Then
-                mUMCCreator = New UMCCreation.clsUMCCreator
+                mUMCCreator = New clsUMCCreator()
             Else
                 mUMCCreator.ResetStatus()
             End If
 
             ' Set the options
             With mFeatureFindingOptions
-                mUMCCreator.SetOptionsEx( _
-                                .MonoMassWeight, _
-                                .MonoMassConstraint, _
-                                .MonoMassConstraintIsPPM, _
-                                .AvgMassWeight, _
-                                .AvgMassConstraint, _
-                                .AvgMassConstraintIsPPM, _
-                                .LogAbundanceWeight, _
-                                .ScanWeight, _
-                                .NETWeight, _
-                                .FitWeight, _
-                                .MaxDistance, _
-                                .UseGenericNET, _
-                                .IMSDriftTimeWeight, _
+                mUMCCreator.SetOptionsEx(
+                                .MonoMassWeight,
+                                .MonoMassConstraint,
+                                .MonoMassConstraintIsPPM,
+                                .AvgMassWeight,
+                                .AvgMassConstraint,
+                                .AvgMassConstraintIsPPM,
+                                .LogAbundanceWeight,
+                                .ScanWeight,
+                                .NETWeight,
+                                .FitWeight,
+                                .MaxDistance,
+                                .UseGenericNET,
+                                .IMSDriftTimeWeight,
                                 .RequireMatchingChargeState)
 
                 mUMCCreator.MinUMCLength = .MinFeatureLengthPoints
@@ -597,19 +606,17 @@ Public Class clsLCMSFeatureFinder
                     mUMCCreator.SetLCMinMaxScans(.MinScan, .MaxScan)
 
                 Else
-                    Dim intMinScan, intMaxScan As Integer
-                    intMinScan = mUMCCreator.MinScan
-                    intMaxScan = mUMCCreator.MaxScan
+                    Dim intMinScan = mUMCCreator.MinScan
+                    Dim intMaxScan = mUMCCreator.MaxScan
                 End If
             End With
 
-            Dim objThread As System.Threading.Thread
-            objThread = New System.Threading.Thread(AddressOf FindLCMSFeaturesWork)
+            Dim objThread = New Thread(AddressOf FindLCMSFeaturesWork)
 
             objThread.Start()
 
-            Do While objThread.ThreadState = Threading.ThreadState.Running Or objThread.ThreadState = Threading.ThreadState.Unstarted
-                System.Threading.Thread.Sleep(100)
+            Do While objThread.ThreadState = ThreadState.Running Or objThread.ThreadState = ThreadState.Unstarted
+                Thread.Sleep(100)
                 Console.WriteLine(mUMCCreator.PercentComplete & ": " & mUMCCreator.Message)
                 If mAbortProcessing Then
                     Exit Do
@@ -620,16 +627,25 @@ Public Class clsLCMSFeatureFinder
                 LogErrors("FindLCMSFeaturesFromMemory", "Processing Aborted", Nothing, False, False, True, eLCMSFeatureFinderErrorCodes.UnspecifiedError)
                 Try
                     objThread.Abort()
-                Catch ex As System.Exception
+                Catch ex As Exception
                     ' Ignore errors here
                 End Try
-                Return False
+                blnSuccess = False
+            Else
+                blnSuccess = True
             End If
 
-        Catch ex As System.Exception
+        Catch ex As Exception
             LogErrors("FindLCMSFeaturesFromMemory", "Error finding the LC-MS features using UMCCreation.dll", ex, False, False, True, eLCMSFeatureFinderErrorCodes.LCMSProcessingError)
-            Return False
+            blnSuccess = False
         End Try
+
+        If Not blnSuccess Then
+            ReDim objFeatures(-1)
+            ReDim intIsotopePeaksIndex(-1)
+            ReDim intUMCIndex(-1)
+            Return False
+        End If
 
         Try
             intMappingCount = mUMCCreator.GetUmcMapping(intIsotopePeaksIndex, intUMCIndex)
@@ -649,7 +665,7 @@ Public Class clsLCMSFeatureFinder
                 ReDim intIsotopePeaksIndex(-1)
                 ReDim intUMCIndex(-1)
             Else
-                If intIsotopePeaksIndex.Length > intMappingCount OrElse _
+                If intIsotopePeaksIndex.Length > intMappingCount OrElse
                    intUMCIndex.Length > intMappingCount Then
                     ReDim Preserve intIsotopePeaksIndex(intMappingCount - 1)
                     ReDim Preserve intUMCIndex(intMappingCount - 1)
@@ -660,8 +676,11 @@ Public Class clsLCMSFeatureFinder
                 ReDim objFeatures(-1)
             End If
 
-        Catch ex As System.Exception
+        Catch ex As Exception
             LogErrors("FindLCMSFeaturesFromMemory", "Error finding the LC-MS features using UMCCreation.dll", ex, False, False, True, eLCMSFeatureFinderErrorCodes.LCMSProcessingError)
+            ReDim objFeatures(-1)
+            ReDim intIsotopePeaksIndex(-1)
+            ReDim intUMCIndex(-1)
             Return False
         End Try
 
@@ -673,15 +692,15 @@ Public Class clsLCMSFeatureFinder
         mUMCCreator.FindUMCs()
     End Sub
 
-    Private Function GenerateOutputFileNameForLCMSFeatures(ByVal strInputFilePath As String) As String
+    Private Function GenerateOutputFileNameForLCMSFeatures(strInputFilePath As String) As String
 
-		Dim strInputFileName As String = "UnknownDataset"
+        Dim strInputFileName As String = "UnknownDataset"
 
         Try
-			If Not strInputFilePath Is Nothing AndAlso strInputFilePath.Length > 0 Then
-				strInputFileName = System.IO.Path.GetFileNameWithoutExtension(strInputFilePath)
-			End If
-        Catch ex As System.Exception
+            If Not strInputFilePath Is Nothing AndAlso strInputFilePath.Length > 0 Then
+                strInputFileName = Path.GetFileNameWithoutExtension(strInputFilePath)
+            End If
+        Catch ex As Exception
             ' Ignore errors here
         End Try
 
@@ -689,19 +708,19 @@ Public Class clsLCMSFeatureFinder
 
     End Function
 
-    Private Function GenerateOutputFileNameForPeakToFeatureMap(ByVal strLCMSFeaturesFilePath As String) As String
+    Private Function GenerateOutputFileNameForPeakToFeatureMap(strLCMSFeaturesFilePath As String) As String
 
-		Dim strInputFileName As String = "UnknownDataset"
+        Dim strInputFileName As String = "UnknownDataset"
 
         Try
             If Not strLCMSFeaturesFilePath Is Nothing AndAlso strLCMSFeaturesFilePath.Length > 0 Then
-                strInputFileName = System.IO.Path.GetFileNameWithoutExtension(strLCMSFeaturesFilePath)
+                strInputFileName = Path.GetFileNameWithoutExtension(strLCMSFeaturesFilePath)
 
                 If strInputFileName.ToLower.EndsWith(FILE_SUFFIX_LCMS_FEATURES.ToLower) Then
                     strInputFileName = strInputFileName.Substring(0, strInputFileName.Length - FILE_SUFFIX_LCMS_FEATURES.Length)
                 End If
             End If
-        Catch ex As System.Exception
+        Catch ex As Exception
             ' Ignore errors here
         End Try
 
@@ -712,41 +731,41 @@ Public Class clsLCMSFeatureFinder
 
     Private Function GetAppFolderPath() As String
         ' Could use Application.StartupPath, but .GetExecutingAssembly is better
-        Return System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
+        Return Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
     End Function
 
-    Private Function GetColumnValueDbl(ByRef strData() As String, ByVal intColumnIndex As Integer, Optional ByVal dblDefaultValue As Double = 0) As Double
+    Private Function GetColumnValueDbl(ByRef strData() As String, intColumnIndex As Integer, Optional ByVal dblDefaultValue As Double = 0) As Double
         Try
             If intColumnIndex >= 0 Then
                 Return CDbl(strData(intColumnIndex))
             Else
                 Return dblDefaultValue
             End If
-        Catch ex As System.Exception
+        Catch ex As Exception
             Return 0
         End Try
     End Function
 
-    Private Function GetColumnValueInt(ByRef strData() As String, ByVal intColumnIndex As Integer, Optional ByVal intDefaultValue As Integer = 0) As Integer
+    Private Function GetColumnValueInt(ByRef strData() As String, intColumnIndex As Integer, Optional ByVal intDefaultValue As Integer = 0) As Integer
         Try
             If intColumnIndex >= 0 Then
                 Return CInt(strData(intColumnIndex))
             Else
                 Return intDefaultValue
             End If
-        Catch ex As System.Exception
+        Catch ex As Exception
             Return 0
         End Try
     End Function
 
-    Private Function GetColumnValueSng(ByRef strData() As String, ByVal intColumnIndex As Integer, Optional ByVal sngDefaultValue As Single = 0) As Single
+    Private Function GetColumnValueSng(ByRef strData() As String, intColumnIndex As Integer, Optional ByVal sngDefaultValue As Single = 0) As Single
         Try
             If intColumnIndex >= 0 Then
                 Return CSng(strData(intColumnIndex))
             Else
                 Return sngDefaultValue
             End If
-        Catch ex As System.Exception
+        Catch ex As Exception
             Return 0
         End Try
     End Function
@@ -791,43 +810,43 @@ Public Class clsLCMSFeatureFinder
 
     End Function
 
-    Protected Function GetParentFolderPathForFile(ByVal strFilePath As String) As String
-        Dim ioFile As System.IO.FileInfo
+    Protected Function GetParentFolderPathForFile(strFilePath As String) As String
+        Dim ioFile As FileInfo
 
-        ioFile = New System.IO.FileInfo(strFilePath)
+        ioFile = New FileInfo(strFilePath)
         If ioFile.Directory.Exists Then
             Return ioFile.DirectoryName
         Else
             ' Use the current working directory
-            Return System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
+            Return Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
         End If
 
     End Function
 
-    Private Function GetTempFolderPath(ByVal blnUseSystemTempPath As Boolean, ByVal blnCreateFolder As Boolean) As String
+    Private Function GetTempFolderPath(blnUseSystemTempPath As Boolean, blnCreateFolder As Boolean) As String
         ' If blnUseSystemTempPath = True then uses the system-defined temporary folder path
         ' Otherwise, uses the application folder as the base folder
         ' If blnCreateFolder = True, then creates the folder; if creation fails, then tries the other available folder (depending on blnUseSystemTempPath)
 
-		Dim strFolderName As String
+        Dim strFolderName As String
         Dim strFolderPathBase As String
-		Dim strFolderPath As String = String.Empty
+        Dim strFolderPath As String = String.Empty
         Dim strFolderPathTest As String
 
         Dim intLoop As Integer
         Dim blnSuccess As Boolean
 
-		strFolderName = System.Guid.NewGuid.ToString
+        strFolderName = Guid.NewGuid.ToString
         strFolderName = strFolderName.Replace("-"c, "_"c)
 
         For intLoop = 1 To 2
             If blnUseSystemTempPath Then
-                strFolderPathBase = System.IO.Path.GetTempPath()
+                strFolderPathBase = Path.GetTempPath()
             Else
                 strFolderPathBase = GetAppFolderPath()
             End If
 
-            strFolderPathTest = System.IO.Path.Combine(strFolderPathBase, strFolderName)
+            strFolderPathTest = Path.Combine(strFolderPathBase, strFolderName)
             If intLoop = 1 Then
                 strFolderPath = String.Copy(strFolderPathTest)
             End If
@@ -835,12 +854,12 @@ Public Class clsLCMSFeatureFinder
             blnSuccess = True
             If blnCreateFolder Then
                 Try
-                    System.IO.Directory.CreateDirectory(strFolderPathTest)
+                    Directory.CreateDirectory(strFolderPathTest)
 
                     ' Folder successfully created
                     strFolderPath = String.Copy(strFolderPathTest)
 
-                Catch ex As System.Exception
+                Catch ex As Exception
                     ' Folder creation failed; set blnSuccess to False so that we loop
                     blnSuccess = False
                 End Try
@@ -878,7 +897,7 @@ Public Class clsLCMSFeatureFinder
 
     End Sub
 
-    Private Sub InitializeColumnMappings(ByRef intColumnMapping() As Integer)
+    Private Sub InitializeColumnMappings(<Out()> ByRef intColumnMapping() As Integer)
         Dim intIndex As Integer
 
         ReDim intColumnMapping(INPUT_FILE_COLUMN_NAME_COUNT - 1)
@@ -900,11 +919,11 @@ Public Class clsLCMSFeatureFinder
         ClearIsotopePeaks()
     End Sub
 
-    Public Shared Function IsNumber(ByVal strValue As String) As Boolean
-		Dim result As Double
+    Public Shared Function IsNumber(strValue As String) As Boolean
+        Dim result As Double
         Try
-			Return Double.TryParse(strValue, result)
-        Catch ex As System.Exception
+            Return Double.TryParse(strValue, result)
+        Catch ex As Exception
             Return False
         End Try
     End Function
@@ -957,48 +976,48 @@ Public Class clsLCMSFeatureFinder
 
     ''End Function
 
-	Private Sub LogErrors(ByVal strSource As String, ByVal strMessage As String, ByVal ex As System.Exception, Optional ByVal blnAllowInformUser As Boolean = True, Optional ByVal blnAllowThrowingException As Boolean = True, Optional ByVal blnLogLocalOnly As Boolean = True, Optional ByVal eNewErrorCode As eLCMSFeatureFinderErrorCodes = eLCMSFeatureFinderErrorCodes.NoError)
-		Dim strMessageWithoutCRLF As String
+    Private Sub LogErrors(strSource As String, strMessage As String, ex As Exception, Optional ByVal blnAllowInformUser As Boolean = True, Optional ByVal blnAllowThrowingException As Boolean = True, Optional ByVal blnLogLocalOnly As Boolean = True, Optional ByVal eNewErrorCode As eLCMSFeatureFinderErrorCodes = eLCMSFeatureFinderErrorCodes.NoError)
+        Dim strMessageWithoutCRLF As String
 
-		mStatusMessage = String.Copy(strMessage)
+        mStatusMessage = String.Copy(strMessage)
 
-		strMessageWithoutCRLF = mStatusMessage.Replace(ControlChars.NewLine, "; ")
+        strMessageWithoutCRLF = mStatusMessage.Replace(ControlChars.NewLine, "; ")
 
-		If ex Is Nothing Then
-			ex = New System.Exception("Error")
-		Else
-			If Not ex.Message Is Nothing AndAlso ex.Message.Length > 0 Then
-				strMessageWithoutCRLF &= "; " & ex.Message
-			End If
-		End If
+        If ex Is Nothing Then
+            ex = New Exception("Error")
+        Else
+            If Not ex.Message Is Nothing AndAlso ex.Message.Length > 0 Then
+                strMessageWithoutCRLF &= "; " & ex.Message
+            End If
+        End If
 
-		Console.WriteLine(System.DateTime.Now().ToLongTimeString & "; " & strMessageWithoutCRLF, strSource)
+        Console.WriteLine(DateTime.Now().ToLongTimeString & "; " & strMessageWithoutCRLF, strSource)
 
-		'If Not mErrorLogger Is Nothing Then
-		'    mErrorLogger.PostError(mStatusMessage.Replace(ControlChars.NewLine, "; "), ex, blnLogLocalOnly)
-		'End If
+        'If Not mErrorLogger Is Nothing Then
+        '    mErrorLogger.PostError(mStatusMessage.Replace(ControlChars.NewLine, "; "), ex, blnLogLocalOnly)
+        'End If
 
-		If Not eNewErrorCode = eLCMSFeatureFinderErrorCodes.NoError Then
-			SetErrorCode(eNewErrorCode, True)
-		End If
+        If Not eNewErrorCode = eLCMSFeatureFinderErrorCodes.NoError Then
+            SetErrorCode(eNewErrorCode, True)
+        End If
 
-		If mShowMessages AndAlso blnAllowInformUser Then
-			System.Windows.Forms.MessageBox.Show(mStatusMessage & ControlChars.NewLine & ex.Message, "Error", Windows.Forms.MessageBoxButtons.OK, Windows.Forms.MessageBoxIcon.Exclamation)
-		ElseIf blnAllowThrowingException Then
-			Throw New System.Exception(mStatusMessage, ex)
-		End If
-	End Sub
+        If mShowMessages AndAlso blnAllowInformUser Then
+            MessageBox.Show(mStatusMessage & ControlChars.NewLine & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
+        ElseIf blnAllowThrowingException Then
+            Throw New Exception(mStatusMessage, ex)
+        End If
+    End Sub
 
     Protected Sub OperationComplete()
         RaiseEvent ProgressComplete()
     End Sub
 
-    Private Sub ParseInputFileColumnNames(ByVal strSplitLine() As String, ByRef intColumnMapping() As Integer)
+    Private Sub ParseInputFileColumnNames(strSplitLine() As String, ByRef intColumnMapping() As Integer)
         Dim intIndex As Integer
         Dim strCurrentColumn As String
 
         Dim htColumnInfo As Hashtable
-        Dim objEnum As System.Collections.IDictionaryEnumerator
+        Dim objEnum As IDictionaryEnumerator
 
         Try
             htColumnInfo = New Hashtable
@@ -1066,14 +1085,14 @@ Public Class clsLCMSFeatureFinder
                     End Select
                 Loop
             End If
-        Catch ex As System.Exception
+        Catch ex As Exception
             ' Error parsing column names; leave
             LogErrors("ParseInputFileColumnNames", "Warning: Error parsing the column names on the first line of the input file", ex, True, False, False, eLCMSFeatureFinderErrorCodes.InputFileReadError)
         End Try
 
     End Sub
 
-    Public Function ProcessFile(ByVal strInputFilePath As String, ByVal strFeaturesOutputFilePath As String, ByVal blnResetErrorCode As Boolean) As Boolean
+    Public Function ProcessFile(strInputFilePath As String, strFeaturesOutputFilePath As String, blnResetErrorCode As Boolean) As Boolean
         ' strInputFilePath should specify a text file with LC-MS data
         ' strFeaturesOutputFilePath should specify the file in which to write the LC-MS features; note that the FeatureToPeakMapFilePath will be auto-defined based on strFeaturesOutputFilePath
         ' strFeaturesOutputFilePath will be auto-defined if blank
@@ -1102,20 +1121,20 @@ Public Class clsLCMSFeatureFinder
 
             If strFeaturesOutputFilePath Is Nothing OrElse strFeaturesOutputFilePath.Length = 0 Then
                 ' Auto-define strFeaturesOutputFilePath
-                strFeaturesOutputFilePath = System.IO.Path.Combine(strInputFolderPath, GenerateOutputFileNameForLCMSFeatures(strInputFilePath))
+                strFeaturesOutputFilePath = Path.Combine(strInputFolderPath, GenerateOutputFileNameForLCMSFeatures(strInputFilePath))
             End If
 
             ' Always auto-define strFeatureToPeakMapFilePath
             strOutputFolderPath = GetParentFolderPathForFile(strFeaturesOutputFilePath)
-            strFeatureToPeakMapFilePath = System.IO.Path.Combine(strOutputFolderPath, GenerateOutputFileNameForPeakToFeatureMap(strFeaturesOutputFilePath))
+            strFeatureToPeakMapFilePath = Path.Combine(strOutputFolderPath, GenerateOutputFileNameForPeakToFeatureMap(strFeaturesOutputFilePath))
 
-        Catch ex As System.Exception
+        Catch ex As Exception
             LogErrors("ProcessFile", "Error validating the filenames", ex, True, False, False, eLCMSFeatureFinderErrorCodes.FilePathError)
             Return False
         End Try
 
         Try
-            If Not System.IO.File.Exists(strInputFilePath) Then
+            If Not File.Exists(strInputFilePath) Then
                 LogErrors("ProcessFile", "Input file not found: " & strInputFilePath, Nothing, True, False, True, eLCMSFeatureFinderErrorCodes.InvalidInputFilePath)
                 Return False
             End If
@@ -1126,7 +1145,7 @@ Public Class clsLCMSFeatureFinder
 
             blnSuccess = FindLCMSFeaturesFromFile(strInputFilePath, strFeaturesOutputFilePath, strFeatureToPeakMapFilePath)
 
-        Catch ex As System.Exception
+        Catch ex As Exception
             LogErrors("ProcessFile", "Error calling ExtractScanStatsFromXcaliburDataFile", ex, True, False, False, eLCMSFeatureFinderErrorCodes.UnspecifiedError)
             Return False
         End Try
@@ -1135,7 +1154,7 @@ Public Class clsLCMSFeatureFinder
 
     End Function
 
-    Public Function ProcessFileWildcard(ByVal strInputFilePath As String, ByVal strOutputFileOrFolderPath As String, ByVal blnResetErrorCode As Boolean) As Boolean
+    Public Function ProcessFileWildcard(strInputFilePath As String, strOutputFileOrFolderPath As String, blnResetErrorCode As Boolean) As Boolean
         ' Returns True if success, False if failure
 
         Dim blnSuccess As Boolean
@@ -1146,11 +1165,11 @@ Public Class clsLCMSFeatureFinder
         Dim strOutputFilePath As String
         Dim strOutputFolderPath As String
 
-        Dim ioFileMatch As System.IO.FileInfo
+        Dim ioFileMatch As FileInfo
 
-        Dim ioFileInfo As System.IO.FileInfo
-        Dim ioInputFolderInfo As System.IO.DirectoryInfo
-        Dim ioOutputFolderInfo As System.IO.DirectoryInfo
+        Dim ioFileInfo As FileInfo
+        Dim ioInputFolderInfo As DirectoryInfo
+        Dim ioOutputFolderInfo As DirectoryInfo = Nothing
 
 
         Dim intIndex As Integer
@@ -1167,34 +1186,34 @@ Public Class clsLCMSFeatureFinder
             ' See if strOutputFileOrFolderPath is a folder
             Try
                 If Not strOutputFileOrFolderPath Is Nothing AndAlso strOutputFileOrFolderPath.Length > 0 Then
-                    If System.IO.Directory.Exists(strOutputFileOrFolderPath) Then
-                        ioOutputFolderInfo = New System.IO.DirectoryInfo(strOutputFileOrFolderPath)
+                    If Directory.Exists(strOutputFileOrFolderPath) Then
+                        ioOutputFolderInfo = New DirectoryInfo(strOutputFileOrFolderPath)
                     End If
                 End If
-            Catch ex As System.Exception
+            Catch ex As Exception
                 ioOutputFolderInfo = Nothing
             End Try
 
             ' See if strInputFilePath contains a wildcard
-            If Not strInputFilePath Is Nothing AndAlso (strInputFilePath.IndexOf("*") >= 0 Or strInputFilePath.IndexOf("?") >= 0) Then
+            If Not strInputFilePath Is Nothing AndAlso (strInputFilePath.IndexOf("*"c) >= 0 Or strInputFilePath.IndexOf("?"c) >= 0) Then
                 ' Obtain a list of the matching files and folders
 
-                ' Copy the path into strCleanPath and replace any * or ? characters with _
+                ' Copy the path into strCleanPath and replace any * or ? characters with
                 strCleanPath = strInputFilePath.Replace("*", "_")
                 strCleanPath = strCleanPath.Replace("?", "_")
 
-                ioFileInfo = New System.IO.FileInfo(strCleanPath)
+                ioFileInfo = New FileInfo(strCleanPath)
                 If ioFileInfo.Directory.Exists Then
                     strInputFolderPath = ioFileInfo.DirectoryName
                 Else
                     ' Use the current working directory
-					strInputFolderPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
+                    strInputFolderPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
                 End If
 
-                ioInputFolderInfo = New System.IO.DirectoryInfo(strInputFolderPath)
+                ioInputFolderInfo = New DirectoryInfo(strInputFolderPath)
 
                 ' Remove any directory information from strinputFilePath
-				strInputFilePath = System.IO.Path.GetFileName(strInputFilePath)
+                strInputFilePath = Path.GetFileName(strInputFilePath)
 
                 ' Cache the list of input files now before starting
 
@@ -1216,9 +1235,9 @@ Public Class clsLCMSFeatureFinder
                     strOutputFilePath = GenerateOutputFileNameForLCMSFeatures(strFilePaths(intIndex))
 
                     If ioOutputFolderInfo Is Nothing Then
-                        strOutputFilePath = System.IO.Path.Combine(ioInputFolderInfo.FullName, strOutputFilePath)
+                        strOutputFilePath = Path.Combine(ioInputFolderInfo.FullName, strOutputFilePath)
                     Else
-                        strOutputFilePath = System.IO.Path.Combine(ioOutputFolderInfo.FullName, strOutputFilePath)
+                        strOutputFilePath = Path.Combine(ioOutputFolderInfo.FullName, strOutputFilePath)
                     End If
 
                     blnSuccess = ProcessFile(strFilePaths(intIndex), strOutputFilePath, blnResetErrorCode)
@@ -1235,13 +1254,13 @@ Public Class clsLCMSFeatureFinder
                 If ioOutputFolderInfo Is Nothing Then
                     strOutputFolderPath = String.Copy(strOutputFileOrFolderPath)
                 Else
-                    strOutputFolderPath = System.IO.Path.Combine(ioOutputFolderInfo.FullName, GenerateOutputFileNameForLCMSFeatures(strInputFilePath))
+                    strOutputFolderPath = Path.Combine(ioOutputFolderInfo.FullName, GenerateOutputFileNameForLCMSFeatures(strInputFilePath))
                 End If
 
                 blnSuccess = ProcessFile(strInputFilePath, strOutputFolderPath, blnResetErrorCode)
             End If
 
-        Catch ex As System.Exception
+        Catch ex As Exception
             LogErrors("ProcessFileWildcard", "Error processing files:", ex, True, True, False, eLCMSFeatureFinderErrorCodes.InvalidInputFilePath)
         End Try
 
@@ -1253,7 +1272,7 @@ Public Class clsLCMSFeatureFinder
         RaiseEvent ProgressReset()
     End Sub
 
-    Protected Sub ResetProgress(ByVal strProgressStepDescription As String)
+    Protected Sub ResetProgress(strProgressStepDescription As String)
         UpdateProgress(strProgressStepDescription, 0)
         RaiseEvent ProgressReset()
     End Sub
@@ -1323,11 +1342,11 @@ Public Class clsLCMSFeatureFinder
         End With
     End Sub
 
-    Private Sub SetErrorCode(ByVal eNewErrorCode As eLCMSFeatureFinderErrorCodes)
+    Private Sub SetErrorCode(eNewErrorCode As eLCMSFeatureFinderErrorCodes)
         SetErrorCode(eNewErrorCode, False)
     End Sub
 
-    Private Sub SetErrorCode(ByVal eNewErrorCode As eLCMSFeatureFinderErrorCodes, ByVal blnLeaveExistingErrorCodeUnchanged As Boolean)
+    Private Sub SetErrorCode(eNewErrorCode As eLCMSFeatureFinderErrorCodes, blnLeaveExistingErrorCodeUnchanged As Boolean)
 
         If blnLeaveExistingErrorCodeUnchanged AndAlso mErrorCode <> eLCMSFeatureFinderErrorCodes.NoError Then
             ' An error code is already defined; do not change it
@@ -1379,25 +1398,25 @@ Public Class clsLCMSFeatureFinder
                 intStartIndex = intEndIndex + 1
             Loop
 
-        Catch ex As System.Exception
+        Catch ex As Exception
             Console.WriteLine("Error in SortFeatureToIsotopeMapInfo: " & ex.Message)
         End Try
 
     End Sub
 
-    Protected Sub UpdateProgress(ByVal strProgressStepDescription As String)
+    Protected Sub UpdateProgress(strProgressStepDescription As String)
         UpdateProgress(strProgressStepDescription, mProgressPercentComplete)
     End Sub
 
-    Protected Sub UpdateProgress(ByVal dblPercentComplete As Double)
+    Protected Sub UpdateProgress(dblPercentComplete As Double)
         UpdateProgress(Me.ProgressStepDescription, CSng(dblPercentComplete))
     End Sub
 
-    Protected Sub UpdateProgress(ByVal sngPercentComplete As Single)
+    Protected Sub UpdateProgress(sngPercentComplete As Single)
         UpdateProgress(Me.ProgressStepDescription, sngPercentComplete)
     End Sub
 
-    Protected Sub UpdateProgress(ByVal strProgressStepDescription As String, ByVal sngPercentComplete As Single)
+    Protected Sub UpdateProgress(strProgressStepDescription As String, sngPercentComplete As Single)
         mProgressStepDescription = String.Copy(strProgressStepDescription)
         If sngPercentComplete < 0 Then
             sngPercentComplete = 0
@@ -1409,7 +1428,7 @@ Public Class clsLCMSFeatureFinder
         RaiseEvent ProgressChanged(Me.ProgressStepDescription, Me.ProgressPercentComplete)
     End Sub
 
-    Private Function ValueToString(ByVal dblValue As Double, ByVal intDigitsOfPrecision As Integer, Optional ByVal sngScientificNotationThreshold As Single = 1000000) As String
+    Private Function ValueToString(dblValue As Double, intDigitsOfPrecision As Integer, Optional ByVal sngScientificNotationThreshold As Single = 1000000) As String
         Dim strFormatString As String
         Dim strValue As String
         Dim strMantissa As String
@@ -1451,7 +1470,7 @@ Public Class clsLCMSFeatureFinder
                 End If
             End If
 
-        Catch ex As System.Exception
+        Catch ex As Exception
             LogErrors("ValueToString", "Error converting " & dblValue.ToString & " to a string", ex, False, False, False, eLCMSFeatureFinderErrorCodes.UnspecifiedError)
             Return dblValue.ToString
         End Try
@@ -1461,3 +1480,4 @@ Public Class clsLCMSFeatureFinder
     End Function
 
 End Class
+

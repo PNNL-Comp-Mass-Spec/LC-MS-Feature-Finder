@@ -32,7 +32,7 @@ namespace UMCCreation
 
 		public int CompareTo(object obj)
 		{
-			clsPair pt = (clsPair) obj ; 
+			var pt = (clsPair) obj ; 
 			// TODO:  Add clsPair.CompareTo implementation
 			return mint_key.CompareTo(pt.mint_key) ; 
 		}

@@ -11,16 +11,16 @@ namespace UMCCreation
 	{
 		// the umcs are sorted in terms of the datasets and 
 		// indices are kept for start and end of each dataset.
-		Hashtable mhash_umc_2_dataset_num ;
-		ArrayList marr_file_names ;
-		ArrayList marr_dataset_start_index ; 
-		ArrayList marr_dataset_stop_index ; 
-		ArrayList marr_dataset_min_scan ; 
-		ArrayList marr_dataset_max_scan ;
+	    private Hashtable mhash_umc_2_dataset_num ;
+	    private ArrayList marr_file_names ;
+	    private ArrayList marr_dataset_start_index ;
+	    private ArrayList marr_dataset_stop_index ;
+	    private ArrayList marr_dataset_min_scan ;
+	    private ArrayList marr_dataset_max_scan ;
 
-		int mint_num_datasets ;
-		int mint_num_umcs ;
-		const int mint_default_umc_allocation = 100000 ; 
+	    private int mint_num_datasets ;
+	    private int mint_num_umcs ;
+	    private const int mint_default_umc_allocation = 100000 ; 
 		
 		public clsUMC []  marr_umcs ; 
 		public clsUMCData()
@@ -36,15 +36,9 @@ namespace UMCCreation
 			Allocate() ; 
 		}
 
-		public int NumUMCS
-		{
-			get
-			{
-				return mint_num_umcs ; 
-			}
-		}
+		public int NumUMCS => mint_num_umcs;
 
-		public void Allocate() 
+	    public void Allocate() 
 		{
 			mhash_umc_2_dataset_num = new Hashtable() ;
 			marr_file_names = new ArrayList() ; 
@@ -61,7 +55,7 @@ namespace UMCCreation
 		{
 			get
 			{
-				string [] datasets = new string [mint_num_datasets] ; 
+				var datasets = new string [mint_num_datasets] ; 
 				marr_file_names.CopyTo(datasets) ; 
 				return datasets ; 
 			}
@@ -78,12 +72,12 @@ namespace UMCCreation
 		{
 			int start_index = 0 , stop_index = 0 ; 
 			GetDataIndex(dataset_num, ref start_index, ref stop_index) ; 
-			int num_pts = stop_index - start_index ;
-			clsUMC []umc_arr = new clsUMC[num_pts] ; 
-			int index ; 
-			try
+			var num_pts = stop_index - start_index ;
+			var umc_arr = new clsUMC[num_pts] ;
+		    try
 			{
-				for (index = start_index ; index < stop_index ; index++)
+			    int index ;
+			    for (index = start_index ; index < stop_index ; index++)
 				{
 					umc_arr[index-start_index] = marr_umcs[index] ; 
 				}
@@ -99,8 +93,8 @@ namespace UMCCreation
 		{
 			try
 			{
-				int index = file_path.LastIndexOf("\\") ;
-				string file = file_path.Substring(index+1) ; 
+				var index = file_path.LastIndexOf("\\", StringComparison.Ordinal) ;
+				var file = file_path.Substring(index+1) ; 
 
 				marr_file_names.Add(file) ; 
 				mhash_umc_2_dataset_num [file] = mint_num_datasets ; 
@@ -108,16 +102,16 @@ namespace UMCCreation
 
 				if (marr_umcs.Length < mint_num_umcs + umcs.Length)
 				{
-					clsUMC [] temp = new clsUMC[2*marr_umcs.Length]; 
-					for (int i = 0 ; i < mint_num_umcs ; i++)
+					var temp = new clsUMC[2*marr_umcs.Length]; 
+					for (var i = 0 ; i < mint_num_umcs ; i++)
 					{
 						temp[i] = marr_umcs[i] ; 
 					}
 					marr_umcs = temp ; 
 				}
-				int num_to_add = umcs.Length ; 
+				var num_to_add = umcs.Length ; 
 
-				for (int i = 0 ; i < num_to_add ; i++)
+				for (var i = 0 ; i < num_to_add ; i++)
 				{
 					marr_umcs[i+mint_num_umcs] = umcs[i] ; 
 				}
@@ -139,8 +133,8 @@ namespace UMCCreation
 		{
 			try
 			{
-				int index = file_path.LastIndexOf("\\") ;
-				string file = file_path.Substring(index+1) ; 
+				var index = file_path.LastIndexOf("\\", StringComparison.Ordinal) ;
+				var file = file_path.Substring(index+1) ; 
 
 				marr_file_names.Add(file) ; 
 				mhash_umc_2_dataset_num [file] = mint_num_datasets ; 
@@ -148,18 +142,18 @@ namespace UMCCreation
 
 				if (marr_umcs.Length < mint_num_umcs + umcs.Length)
 				{
-					clsUMC [] temp = new clsUMC[2*marr_umcs.Length]; 
-					for (int i = 0 ; i < mint_num_umcs ; i++)
+					var temp = new clsUMC[2*marr_umcs.Length]; 
+					for (var i = 0 ; i < mint_num_umcs ; i++)
 					{
 						temp[i] = marr_umcs[i] ; 
 					}
 					marr_umcs = temp ; 
 				}
-				int num_to_add = umcs.Length ; 
-				int min_scan = int.MaxValue ; 
-				int max_scan = int.MinValue ; 
+				var num_to_add = umcs.Length ; 
+				var min_scan = int.MaxValue ; 
+				var max_scan = int.MinValue ; 
 
-				for (int i = 0 ; i < num_to_add ; i++)
+				for (var i = 0 ; i < num_to_add ; i++)
 				{
 					marr_umcs[i+mint_num_umcs] = umcs[i] ; 
 					if (umcs[i].mint_scan < min_scan)
@@ -183,16 +177,16 @@ namespace UMCCreation
 
 		public void GetMassesAndScans(int dataset_num, bool aligned, ref float [] masses, ref float [] scans)
 		{
-			int start_index = (int) marr_dataset_start_index[dataset_num] ; 
-			int stop_index =(int) marr_dataset_stop_index[dataset_num] ; 
-			int num_pts = stop_index - start_index ;
-			int index ; 
-			try
+			var start_index = (int) marr_dataset_start_index[dataset_num] ; 
+			var stop_index =(int) marr_dataset_stop_index[dataset_num] ; 
+			var num_pts = stop_index - start_index ;
+		    try
 			{
 
 				masses = new float[num_pts] ; 
-				scans = new float[num_pts] ; 
-				for (index = start_index ; index < stop_index ; index++)
+				scans = new float[num_pts] ;
+			    int index ;
+			    for (index = start_index ; index < stop_index ; index++)
 				{
 					if (!aligned)
 					{
@@ -216,16 +210,16 @@ namespace UMCCreation
 		// index for the umcs in the array marr_umcs.
 		public int GetMassesAndScans(int dataset_num, ref double [] masses, ref int [] scans)
 		{
-			int start_index = (int) marr_dataset_start_index[dataset_num] ; 
-			int stop_index =(int) marr_dataset_stop_index[dataset_num] ; 
-			int num_pts = stop_index - start_index ;
-			int index ; 
-			try
+			var start_index = (int) marr_dataset_start_index[dataset_num] ; 
+			var stop_index =(int) marr_dataset_stop_index[dataset_num] ; 
+			var num_pts = stop_index - start_index ;
+		    try
 			{
 
 				masses = new double[num_pts] ; 
-				scans = new int[num_pts] ; 
-				for (index = start_index ; index < stop_index ; index++)
+				scans = new int[num_pts] ;
+			    int index ;
+			    for (index = start_index ; index < stop_index ; index++)
 				{
 					masses[index-start_index] = marr_umcs[index].mdbl_mono_mass ; 
 					scans[index-start_index] =  marr_umcs[index].mint_scan ; 

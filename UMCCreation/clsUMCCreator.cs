@@ -10,8 +10,7 @@ namespace UMCCreation
     /// </summary>
     public class clsIsotopePeak
     {
-        public int mint_original_index;
-        public int mint_umc_index;
+        public readonly int mint_original_index;
         public int mint_lc_scan;
         public short mshort_charge;
         public double mdbl_abundance;
@@ -22,6 +21,11 @@ namespace UMCCreation
         public double mdbl_max_abundance_mass;
         public double mdbl_i2_abundance;
         public float mflt_ims_drift_time;
+
+        public clsIsotopePeak(int originalIndex)
+        {
+            mint_original_index = originalIndex;
+        }
     }
 
     /// <summary>
@@ -43,13 +47,13 @@ namespace UMCCreation
     /// </summary>
     public class clsUMCCreator
     {
-        private int mint_percent_done;
+        // Unused: private int mint_percent_done;
         private bool mbln_process_chunks;
         private float mflt_mono_mass_start;
         private float mflt_mono_mass_end;
-        private int mint_mono_mass_overlap;
+        // Unused: private int mint_mono_mass_overlap;
 
-        private UMCCreator mobj_umc_creator;
+        private readonly UMCCreator mobj_umc_creator;
 
         private StreamWriter mfile_logFile;
         private string mstr_baseFileName;
@@ -64,18 +68,24 @@ namespace UMCCreation
         private string CreateBaseFileName(string directoryName, string inputFileName)
         {
             // Remove any directory information from the filename
-            var inputFileNameTok = Path.GetFileName(inputFileName);
+            var baseFileName = Path.GetFileName(inputFileName);
 
             // Remove the "_isos.csv" file extension
-            inputFileNameTok = inputFileNameTok.Replace("_isos.csv", "");
+            if (baseFileName != null)
+            {
+                baseFileName = baseFileName.Replace("_isos.csv", "");
 
-            // Append the Input File Name to the Output Directory to create the Base File Name
-            return Path.Combine(directoryName, inputFileNameTok);
+                // Append the Input File Name to the Output Directory to create the Base File Name
+                return Path.Combine(directoryName, baseFileName);
+            }
+
+            return string.Empty;
+
         }
 
         private void createLogFile()
         {
-            string logFileName = mstr_baseFileName + "_FeatureFinder_Log.txt";
+            var logFileName = mstr_baseFileName + "_FeatureFinder_Log.txt";
             mfile_logFile =
                 new StreamWriter(new FileStream(logFileName, FileMode.Create, FileAccess.Write, FileShare.Read));
         }
@@ -84,21 +94,21 @@ namespace UMCCreation
         {
             mfile_logFile.WriteLine("{0:MM/dd/yyyy HH:mm:ss}\t{1}", DateTime.Now, textToLog);
             mfile_logFile.Flush();
-            System.Console.WriteLine(textToLog);
+            Console.WriteLine(textToLog);
         }
 
         private void log(string textToLog, int numToLog)
         {
             mfile_logFile.WriteLine("{0:MM/dd/yyyy HH:mm:ss}\t{1}{2}", DateTime.Now, textToLog, numToLog);
             mfile_logFile.Flush();
-            System.Console.WriteLine(textToLog + numToLog);
+            Console.WriteLine(textToLog + numToLog);
         }
 
         private void log(string textToLog, float numToLog)
         {
             mfile_logFile.WriteLine("{0:MM/dd/yyyy HH:mm:ss}\t{1}{2,4:F4}", DateTime.Now, textToLog, numToLog);
             mfile_logFile.Flush();
-            System.Console.WriteLine(textToLog + numToLog);
+            Console.WriteLine(textToLog + numToLog);
         }
 
         public short PercentComplete
@@ -138,15 +148,9 @@ namespace UMCCreation
 
         public int MinUMCLength { get; set; }
 
-        public int MinScan
-        {
-            get { return mobj_umc_creator.mint_lc_min_scan; }
-        }
+        public int MinScan => mobj_umc_creator.mint_lc_min_scan;
 
-        public int MaxScan
-        {
-            get { return mobj_umc_creator.mint_lc_max_scan; }
-        }
+        public int MaxScan => mobj_umc_creator.mint_lc_max_scan;
 
         public clsUMCCreator()
         {
@@ -166,11 +170,11 @@ namespace UMCCreation
             if (mbln_process_chunks)
             {
                 double mflt_mono_mass_chunk_start = mflt_mono_mass_start;
-                float chunk_size = mobj_umc_creator.GetSegmentSize();
+                var chunk_size = mobj_umc_creator.GetSegmentSize();
 
                 log("Processing with Chunks ...");
-                int iChunk = 0;
-                int UMC_count = 0;
+                var iChunk = 0;
+                var UMC_count = 0;
 
                 while (Status != enmStatus.COMPLETE)
                 {
@@ -198,7 +202,7 @@ namespace UMCCreation
 
                     mflt_mono_mass_chunk_start = mflt_mono_mass_chunk_start + chunk_size;
                     log("Processing one Chunk");
-                    int numPeaks = mobj_umc_creator.ReadCSVFile();
+                    var numPeaks = mobj_umc_creator.ReadCSVFile();
 
                     log("Total number of peaks we'll consider = ", numPeaks);
                     if (numPeaks == 0)
@@ -239,7 +243,7 @@ namespace UMCCreation
             {
                 log("Processing without Chunks...");
                 Status = enmStatus.LOADING;
-                int numPeaks = mobj_umc_creator.ReadCSVFile();
+                var numPeaks = mobj_umc_creator.ReadCSVFile();
                 log("Total number of peaks we'll consider = ", numPeaks);
 
                 Status = enmStatus.CLUSTERING;
@@ -278,7 +282,7 @@ namespace UMCCreation
 
         private void LoadFindUMCs(bool is_pek_file)
         {
-            System.Console.WriteLine("Loading UMCs");
+            Console.WriteLine("Loading UMCs");
             Status = enmStatus.LOADING;
 
             if (is_pek_file)
@@ -289,7 +293,7 @@ namespace UMCCreation
             else
             {
                 Message = "Loading CSV file";
-                System.Console.WriteLine(Message);
+                Console.WriteLine(Message);
                 mobj_umc_creator.ReadCSVFile(FileName);
             }
 
@@ -323,17 +327,15 @@ namespace UMCCreation
 
         public void SetIsotopePeaks(ref clsIsotopePeak[] isotope_peaks)
         {
-            int numPeaks = isotope_peaks.Length;
-            List<IsotopePeak> vectPeaks = new List<IsotopePeak>(numPeaks);
+            var numPeaks = isotope_peaks.Length;
+            var vectPeaks = new List<IsotopePeak>(numPeaks);
 
-            for (int pkNum = 0; pkNum < numPeaks; pkNum++)
+            for (var pkNum = 0; pkNum < numPeaks; pkNum++)
             {
-                clsIsotopePeak isoPk;
-                IsotopePeak pk = new IsotopePeak();
-                isoPk = isotope_peaks[pkNum];
+                var pk = new IsotopePeak();
+                var isoPk = isotope_peaks[pkNum];
 
                 pk.mint_original_index = isoPk.mint_original_index;
-                pk.mint_umc_index = isoPk.mint_umc_index;
                 pk.mint_lc_scan = isoPk.mint_lc_scan;
                 pk.mshort_charge = isoPk.mshort_charge;
                 pk.mdbl_abundance = isoPk.mdbl_abundance;
@@ -352,16 +354,13 @@ namespace UMCCreation
 
         public bool LoadProgramOptions()
         {
-            string settings_file;
-            string logText;
-            bool success = false;
 
-            settings_file = OptionsFileName;
-            IniReader iniReader = new IniReader(settings_file);
+            var settings_file = OptionsFileName;
+            var iniReader = new IniReader(settings_file);
 
             //first load incoming and outgoing filenames and folder options
-            string isos_file = iniReader.ReadString("Files", "InputFileName", "");
-            string output_dir = iniReader.ReadString("Files", "OutputDirectory", ".");
+            var isos_file = iniReader.ReadString("Files", "InputFileName", "");
+            var output_dir = iniReader.ReadString("Files", "OutputDirectory", ".");
             mobj_umc_creator.InputFileName = isos_file;
             mobj_umc_creator.OutputDirectory = output_dir;
 
@@ -369,23 +368,23 @@ namespace UMCCreation
 
             createLogFile();
 
-            logText = "Loading settings from INI file: " + settings_file;
+            var logText = "Loading settings from INI file: " + settings_file;
             log(logText);
 
             //next load data filters
-            float isotopicFit = iniReader.ReadFloat("DataFilters", "MaxIsotopicFit", 1);
-            if (isotopicFit == 0)
+            var isotopicFit = iniReader.ReadFloat("DataFilters", "MaxIsotopicFit", 1);
+            if (Math.Abs(isotopicFit) < float.Epsilon)
             {
                 isotopicFit = 1;
             }
 
-            int intensityFilter = iniReader.ReadInteger("DataFilters", "MinimumIntensity", 500);
+            var intensityFilter = iniReader.ReadInteger("DataFilters", "MinimumIntensity", 500);
             mflt_mono_mass_start = iniReader.ReadFloat("DataFilters", "MonoMassStart", 0);
             mflt_mono_mass_end = iniReader.ReadFloat("DataFilters", "MonoMassEnd", float.MaxValue);
             mbln_process_chunks = iniReader.ReadBoolean("DataFilters", "ProcessDataInChunks", false);
 
             //mint_mono_mass_overlap = iniReader.ReadInteger("DataFilters", "MonoMassSegmentOverlapDa", 2);
-            if (mflt_mono_mass_end == 0)
+            if (Math.Abs(mflt_mono_mass_end) < float.Epsilon)
             {
                 if (mbln_process_chunks)
                 {
@@ -393,56 +392,56 @@ namespace UMCCreation
                 }
             }
 
-            int maxPoints = iniReader.ReadInteger("DataFilters", "MaxDataPointsPerChunk", int.MaxValue);
+            var maxPoints = iniReader.ReadInteger("DataFilters", "MaxDataPointsPerChunk", int.MaxValue);
             if (maxPoints == 0)
             {
                 maxPoints = int.MaxValue;
             }
 
-            int chunkSize = iniReader.ReadInteger("DataFilters", "ChunkSize", 3000);
+            var chunkSize = iniReader.ReadInteger("DataFilters", "ChunkSize", 3000);
             if (chunkSize == 0)
             {
                 chunkSize = 3000;
             }
 
-            int imsMinScan = iniReader.ReadInteger("DataFilters", "IMSMinScan", 0);
+            var imsMinScan = iniReader.ReadInteger("DataFilters", "IMSMinScan", 0);
 
-            int imsMaxScan = iniReader.ReadInteger("DataFilters", "IMSMaxScan", 50000);
+            var imsMaxScan = iniReader.ReadInteger("DataFilters", "IMSMaxScan", 50000);
             if (imsMaxScan == 0)
             {
                 imsMaxScan = int.MaxValue;
             }
 
-            int lcMinScan = iniReader.ReadInteger("DataFilters", "LCMinScan", 0);
-            int lcMaxScan = iniReader.ReadInteger("DataFilters", "LCMaxScan", 50000);
+            var lcMinScan = iniReader.ReadInteger("DataFilters", "LCMinScan", 0);
+            var lcMaxScan = iniReader.ReadInteger("DataFilters", "LCMaxScan", 50000);
             if (lcMaxScan == 0)
             {
                 lcMaxScan = int.MaxValue;
             }
 
             mobj_umc_creator.SetFilterOptions(isotopicFit, intensityFilter, lcMinScan, lcMaxScan, imsMinScan, imsMaxScan,
-                mflt_mono_mass_start, mflt_mono_mass_end, mbln_process_chunks, maxPoints, mint_mono_mass_overlap,
+                mflt_mono_mass_start, mflt_mono_mass_end, mbln_process_chunks, maxPoints,
                 chunkSize);
 
             //next load the UMC creation options
-            float monoMassWeight = iniReader.ReadFloat("UMCCreationOptions", "MonoMassWeight", 0.01f);
-            float monoMassConstraint = iniReader.ReadFloat("UMCCreationOptions", "MonoMassConstraint", 50);
-            bool monoMassPPM = iniReader.ReadBoolean("UMCCreationOptions", "MonoMassConstraintIsPPM", true);
-            float imsDriftWeight = iniReader.ReadFloat("UMCCreationOptions", "IMSDriftTimeWeight", 0.1f);
-            float logAbundanceWeight = iniReader.ReadFloat("UMCCreationOptions", "LogAbundanceWeight", 0.1f);
-            float netWeight = iniReader.ReadFloat("UMCCreationOptions", "NETWeight", 0.01f);
-            float fitWeight = iniReader.ReadFloat("UMCCreationOptions", "FitWeight", 0.01f);
-            float avgMassWeight = iniReader.ReadFloat("UMCCreationOptions", "AvgMassWeight", 0.01f);
-            float avgMassConstr = iniReader.ReadFloat("UMCCreationOptions", "AvgMassConstraint", 10);
-            bool avgMassPPM = iniReader.ReadBoolean("UMCCreationOptions", "AvgMassConstraintIsPPM", true);
-            float scanWeight = iniReader.ReadFloat("UMCCreationOptions", "ScanWeight", 0);
-            float maxDist = iniReader.ReadFloat("UMCCreationOptions", "MaxDistance", 0.1f);
-            bool useGeneric = iniReader.ReadBoolean("UMCCreationOptions", "UseGenericNET", true);
+            var monoMassWeight = iniReader.ReadFloat("UMCCreationOptions", "MonoMassWeight", 0.01f);
+            var monoMassConstraint = iniReader.ReadFloat("UMCCreationOptions", "MonoMassConstraint", 50);
+            var monoMassPPM = iniReader.ReadBoolean("UMCCreationOptions", "MonoMassConstraintIsPPM", true);
+            var imsDriftWeight = iniReader.ReadFloat("UMCCreationOptions", "IMSDriftTimeWeight", 0.1f);
+            var logAbundanceWeight = iniReader.ReadFloat("UMCCreationOptions", "LogAbundanceWeight", 0.1f);
+            var netWeight = iniReader.ReadFloat("UMCCreationOptions", "NETWeight", 0.01f);
+            var fitWeight = iniReader.ReadFloat("UMCCreationOptions", "FitWeight", 0.01f);
+            var avgMassWeight = iniReader.ReadFloat("UMCCreationOptions", "AvgMassWeight", 0.01f);
+            var avgMassConstr = iniReader.ReadFloat("UMCCreationOptions", "AvgMassConstraint", 10);
+            var avgMassPPM = iniReader.ReadBoolean("UMCCreationOptions", "AvgMassConstraintIsPPM", true);
+            var scanWeight = iniReader.ReadFloat("UMCCreationOptions", "ScanWeight", 0);
+            var maxDist = iniReader.ReadFloat("UMCCreationOptions", "MaxDistance", 0.1f);
+            var useGeneric = iniReader.ReadBoolean("UMCCreationOptions", "UseGenericNET", true);
             MinUMCLength = iniReader.ReadInteger("UMCCreationOptions", "MinFeatureLengthPoints", 2);
-            bool useCharge = iniReader.ReadBoolean("UMCCreationOptions", "UseCharge", false);
+            var useCharge = iniReader.ReadBoolean("UMCCreationOptions", "UseCharge", false);
 
             //this one is not sent over for now
-            bool useWeightedEuclidean = iniReader.ReadBoolean("UMCCreationOptions", "UseWeightedEuclidean", false);
+            var useWeightedEuclidean = iniReader.ReadBoolean("UMCCreationOptions", "UseWeightedEuclidean", false);
 
             log("Data Filters - ");
             log(" Minimum LC scan = ", lcMinScan);
@@ -453,29 +452,29 @@ namespace UMCCreation
             log(" Minimum intensity = ", intensityFilter);
             log(" Mono mass start = ", mflt_mono_mass_start);
             log(" Mono mass end = ", mflt_mono_mass_end);
-            log(" Require matching charge state = " + useCharge.ToString());
+            log(" Require matching charge state = " + useCharge);
 
             //load all the umc creation options
             mobj_umc_creator.SetOptionsEx(monoMassWeight, monoMassConstraint, monoMassPPM, avgMassWeight, avgMassConstr,
                 avgMassPPM, logAbundanceWeight, scanWeight, netWeight, fitWeight, maxDist, useGeneric, imsDriftWeight,
                 useCharge);
 
-            return success;
+            return true;
         }
 
-        public int GetUmcMapping(ref int[] isotope_peaks_index, ref int[] umc_index)
+        public int GetUmcMapping(out int[] isotope_peaks_index, out int[] umc_index)
         {
-            int numMappings = mobj_umc_creator.mmultimap_umc_2_peak_index.Sum(i => i.Value.Count);
+            var numMappings = mobj_umc_creator.mmultimap_umc_2_peak_index.Sum(i => i.Value.Count);
             isotope_peaks_index = new int[numMappings];
             umc_index = new int[numMappings];
 
-            int mappingNum = 0;
+            var mappingNum = 0;
             foreach (var item in mobj_umc_creator.mmultimap_umc_2_peak_index)
             {
-                int currentUmcNum = item.Key;
+                var currentUmcNum = item.Key;
                 foreach (var p in item.Value)
                 {
-                    int pkIndex = p;
+                    var pkIndex = p;
                     isotope_peaks_index[mappingNum] = pkIndex;
                     umc_index[mappingNum] = currentUmcNum;
                     mappingNum++;
@@ -520,7 +519,7 @@ namespace UMCCreation
         /// <returns></returns>
         public bool PrintUMCsToFile(int chunkIndex, int featureStartIndex)
         {
-            string baseFileName = mstr_baseFileName + "_chunk" + chunkIndex;
+            var baseFileName = mstr_baseFileName + "_chunk" + chunkIndex;
             return mobj_umc_creator.CreateFeatureFiles(baseFileName, featureStartIndex);
         }
 
@@ -536,7 +535,7 @@ namespace UMCCreation
             int maxDataPoints, int monoMassSegOverlap, float segmentSize)
         {
             mobj_umc_creator.SetFilterOptions(isotopic_fit, min_intensity, min_lc_scan, max_lc_scan, min_ims_scan,
-                max_ims_scan, mono_mass_start, mono_mass_end, process_mass_seg, maxDataPoints, monoMassSegOverlap,
+                max_ims_scan, mono_mass_start, mono_mass_end, process_mass_seg, maxDataPoints,
                 segmentSize);
         }
 
@@ -551,35 +550,37 @@ namespace UMCCreation
 
         public clsUMC[] GetUMCs()
         {
-            int numUmcs = mobj_umc_creator.GetNumUmcs();
-            clsUMC[] arr_umcs = new clsUMC[numUmcs];
+            var numUmcs = mobj_umc_creator.GetNumUmcs();
+            var arr_umcs = new clsUMC[numUmcs];
 
-            for (int umcNum = 0; umcNum < numUmcs; umcNum++)
+            for (var umcNum = 0; umcNum < numUmcs; umcNum++)
             {
-                UMC umc = mobj_umc_creator.mvect_umcs[umcNum];
-                clsUMC newUmc = new clsUMC();
-                newUmc.mdbl_abundance = umc.mdbl_sum_abundance;
+                var umc = mobj_umc_creator.mvect_umcs[umcNum];
+                var newUmc = new clsUMC
+                {
+                    mdbl_abundance = umc.mdbl_sum_abundance,
+                    mdbl_class_rep_mz = umc.mdbl_class_rep_mz,
+                    mdbl_mono_mass = umc.mdbl_median_mono_mass
+                };
 
-                newUmc.mdbl_class_rep_mz = (double) umc.mdbl_class_rep_mz;
-                newUmc.mdbl_mono_mass = (double) umc.mdbl_median_mono_mass;
                 newUmc.mdbl_mono_mass_calibrated = newUmc.mdbl_mono_mass;
 
                 newUmc.mint_scan = umc.mint_max_abundance_scan;
                 newUmc.mint_start_scan = umc.mint_start_scan;
                 newUmc.mint_end_scan = umc.mint_stop_scan;
 
-                newUmc.mdbl_net = (double) umc.mint_max_abundance_scan;
+                newUmc.mdbl_net = umc.mint_max_abundance_scan;
                 if (mobj_umc_creator.mint_lc_max_scan > mobj_umc_creator.mint_lc_min_scan)
                 {
                     // Compute Generic NET value
-                    newUmc.mdbl_net = (double) (umc.mint_max_abundance_scan - mobj_umc_creator.mint_lc_min_scan) * 1.0 /
+                    newUmc.mdbl_net = (umc.mint_max_abundance_scan - mobj_umc_creator.mint_lc_min_scan) * 1.0 /
                                       (mobj_umc_creator.mint_lc_max_scan - mobj_umc_creator.mint_lc_min_scan);
                 }
 
                 newUmc.mint_scan_aligned = umc.mint_max_abundance_scan;
 
                 newUmc.mint_umc_index = umc.mint_umc_index;
-                newUmc.mint_class_rep_charge = (int) umc.mshort_class_rep_charge;
+                newUmc.mint_class_rep_charge = umc.mshort_class_rep_charge;
                 arr_umcs[umcNum] = newUmc;
             }
 

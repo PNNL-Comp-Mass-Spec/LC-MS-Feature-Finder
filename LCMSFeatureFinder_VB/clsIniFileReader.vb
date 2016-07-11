@@ -1,5 +1,7 @@
 Option Strict On
 
+Imports System.Globalization
+Imports System.IO
 ' This class can read a .Ini file containing configuration settings
 ' One can obtain the value for a given setting in a given section using GetSetting()
 ' One can also update values or add new values and sections
@@ -30,7 +32,7 @@ Option Strict On
 
 Public Class clsIniFileReader
 
-    Public Sub New(ByVal strIniFilePath As String)
+    Public Sub New(strIniFilePath As String)
         ReadIniFile(strIniFilePath)
     End Sub
 
@@ -105,7 +107,7 @@ Public Class clsIniFileReader
         mDataLoaded = False
     End Sub
 
-    Protected Sub ExpandSectionDataIfNeeded(ByVal intLengthRequired As Integer)
+    Protected Sub ExpandSectionDataIfNeeded(intLengthRequired As Integer)
         Dim intIndex As Integer
         Dim intStartIndex As Integer
         Dim intNewLength As Integer
@@ -133,8 +135,8 @@ Public Class clsIniFileReader
         End If
     End Sub
 
-    Protected Sub ExpandKeyDataIfNeeded(ByVal intSectionIndex As Integer, ByVal intLengthRequired As Integer)
-		Dim intNewLength As Integer
+    Protected Sub ExpandKeyDataIfNeeded(intSectionIndex As Integer, intLengthRequired As Integer)
+        Dim intNewLength As Integer
 
         If intSectionIndex >= 0 And intSectionIndex < mSectionsLowerCase.Length Then
             If intLengthRequired > mKeysBySection(intSectionIndex).NamesLowerCase.Length Then
@@ -152,7 +154,7 @@ Public Class clsIniFileReader
 
     End Sub
 
-    Protected Function GetSectionIndex(ByVal strSectionName As String, ByVal blnAddIfMissing As Boolean) As Integer
+    Protected Function GetSectionIndex(strSectionName As String, blnAddIfMissing As Boolean) As Integer
         ' Looks for strSectionName in mSectionsLowerCase
         ' If not found, then adds it
 
@@ -180,7 +182,7 @@ Public Class clsIniFileReader
 
     End Function
 
-    Protected Function GetSettingConfirmMatch(ByVal strSectionName As String, ByVal strKeyName As String, ByVal strDefaultValue As String, ByRef blnMatchFound As Boolean) As String
+    Protected Function GetSettingConfirmMatch(strSectionName As String, strKeyName As String, strDefaultValue As String, ByRef blnMatchFound As Boolean) As String
         Dim intSectionIndex As Integer
         Dim intIndexMatch As Integer
 
@@ -204,11 +206,11 @@ Public Class clsIniFileReader
         Return strValue
     End Function
 
-    Public Function GetSetting(ByVal strSectionName As String, ByVal strKeyName As String, ByVal strDefaultValue As String) As String
+    Public Function GetSetting(strSectionName As String, strKeyName As String, strDefaultValue As String) As String
         Return GetSettingConfirmMatch(strSectionName, strKeyName, strDefaultValue, False)
     End Function
 
-    Public Function GetSetting(ByVal strSectionName As String, ByVal strKeyName As String, ByVal intDefaultValue As Integer) As Integer
+    Public Function GetSetting(strSectionName As String, strKeyName As String, intDefaultValue As Integer) As Integer
         Dim blnMatchFound As Boolean
         Dim strValue As String
         Dim intValue As Integer
@@ -221,7 +223,7 @@ Public Class clsIniFileReader
                 If IsNumber(strValue) Then
                     intValue = CInt(strValue)
                 End If
-            Catch ex As System.Exception
+            Catch ex As Exception
                 ' Ignore errors here
             End Try
         End If
@@ -230,7 +232,7 @@ Public Class clsIniFileReader
 
     End Function
 
-    Public Function GetSetting(ByVal strSectionName As String, ByVal strKeyName As String, ByVal sngDefaultValue As Single) As Single
+    Public Function GetSetting(strSectionName As String, strKeyName As String, sngDefaultValue As Single) As Single
         Dim blnMatchFound As Boolean
         Dim strValue As String
         Dim sngValue As Single
@@ -243,7 +245,7 @@ Public Class clsIniFileReader
                 If IsNumber(strValue) Then
                     sngValue = CSng(strValue)
                 End If
-            Catch ex As System.Exception
+            Catch ex As Exception
                 ' Ignore errors here
             End Try
         End If
@@ -252,7 +254,7 @@ Public Class clsIniFileReader
 
     End Function
 
-    Public Function GetSetting(ByVal strSectionName As String, ByVal strKeyName As String, ByVal dblDefaultValue As Double) As Double
+    Public Function GetSetting(strSectionName As String, strKeyName As String, dblDefaultValue As Double) As Double
         Dim blnMatchFound As Boolean
         Dim strValue As String
         Dim dblValue As Double
@@ -265,7 +267,7 @@ Public Class clsIniFileReader
                 If IsNumber(strValue) Then
                     dblValue = CDbl(strValue)
                 End If
-            Catch ex As System.Exception
+            Catch ex As Exception
                 ' Ignore errors here
             End Try
         End If
@@ -274,7 +276,7 @@ Public Class clsIniFileReader
 
     End Function
 
-    Public Function GetSetting(ByVal strSectionName As String, ByVal strKeyName As String, ByVal blnDefaultValue As Boolean) As Boolean
+    Public Function GetSetting(strSectionName As String, strKeyName As String, blnDefaultValue As Boolean) As Boolean
         Dim blnMatchFound As Boolean
         Dim strValue As String
         Dim blnValue As Boolean
@@ -285,7 +287,7 @@ Public Class clsIniFileReader
         If blnMatchFound Then
             Try
                 blnValue = CBool(strValue)
-            Catch ex As System.Exception
+            Catch ex As Exception
                 ' Ignore errors here
             End Try
         End If
@@ -294,20 +296,18 @@ Public Class clsIniFileReader
 
     End Function
 
-    Protected Function IsNumber(ByVal strValue As String) As Boolean
-        Dim objFormatProvider As System.Globalization.NumberFormatInfo
+    Protected Function IsNumber(strValue As String) As Boolean
+
         Try
-            Return Double.TryParse(strValue, Globalization.NumberStyles.Any, objFormatProvider, 0)
-        Catch ex As System.Exception
+            Return Double.TryParse(strValue, 0)
+        Catch ex As Exception
             Return False
         End Try
     End Function
 
-    Public Function ReadIniFile(ByVal strIniFilePath As String) As Boolean
+    Public Function ReadIniFile(strIniFilePath As String) As Boolean
         ' Reads the settings from the .Ini file specifed by strIniFilePath
         ' Stores the values in mSectionsLowerCase, mSectionsOriginalCase and mKeysBySection
-
-        Dim srInFile As System.IO.StreamReader
 
         Dim strLineIn As String
 
@@ -321,7 +321,7 @@ Public Class clsIniFileReader
         Dim blnSuccess As Boolean
 
         Try
-            If Not System.IO.File.Exists(strIniFilePath) Then
+            If Not File.Exists(strIniFilePath) Then
                 Return False
             End If
 
@@ -331,38 +331,38 @@ Public Class clsIniFileReader
             ClearSectionData()
             mIniFilePath = String.Empty
 
-            srInFile = New System.IO.StreamReader(New System.IO.FileStream(strIniFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+            Using srInFile = New StreamReader(New FileStream(strIniFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-            mIniFilePath = String.Copy(strIniFilePath)
-            strCurrentSection = String.Empty
+                mIniFilePath = String.Copy(strIniFilePath)
 
-            Do While srInFile.Peek >= 0
-                strLineIn = srInFile.ReadLine
+                Do While Not srInFile.EndOfStream
+                    strLineIn = srInFile.ReadLine
 
-                If Not strLineIn Is Nothing AndAlso strLineIn.Length > 0 Then
-                    strLineIn = strLineIn.Trim
+                    If Not strLineIn Is Nothing AndAlso strLineIn.Length > 0 Then
+                        strLineIn = strLineIn.Trim
 
-                    If strLineIn.StartsWith(COMMENT_LINE_START_CHAR) Then
-                        ' Comment line; skip it
-                    Else
-                        If strLineIn.StartsWith(SECTION_LINE_START_CHAR) AndAlso strLineIn.EndsWith(SECTION_LINE_END_CHAR) Then
-                            ' Section name
-                            strCurrentSection = strLineIn.Substring(1, strLineIn.Length - 2)
-                            intCurrentSectionIndex = GetSectionIndex(strCurrentSection, True)
+                        If strLineIn.StartsWith(COMMENT_LINE_START_CHAR) Then
+                            ' Comment line; skip it
                         Else
-                            ' Look for an Equals sign
-                            intEqualsLoc = strLineIn.IndexOf("="c)
+                            If strLineIn.StartsWith(SECTION_LINE_START_CHAR) AndAlso strLineIn.EndsWith(SECTION_LINE_END_CHAR) Then
+                                ' Section name
+                                strCurrentSection = strLineIn.Substring(1, strLineIn.Length - 2)
+                                intCurrentSectionIndex = GetSectionIndex(strCurrentSection, True)
+                            Else
+                                ' Look for an Equals sign
+                                intEqualsLoc = strLineIn.IndexOf("="c)
 
-                            If intEqualsLoc > 0 Then
-                                strKeyName = strLineIn.Substring(0, intEqualsLoc)
-                                strValue = strLineIn.Substring(intEqualsLoc + 1)
+                                If intEqualsLoc > 0 Then
+                                    strKeyName = strLineIn.Substring(0, intEqualsLoc)
+                                    strValue = strLineIn.Substring(intEqualsLoc + 1)
 
-                                StoreKeyAndValue(intCurrentSectionIndex, strKeyName, strValue)
+                                    StoreKeyAndValue(intCurrentSectionIndex, strKeyName, strValue)
+                                End If
                             End If
                         End If
                     End If
-                End If
-            Loop
+                Loop
+            End Using
 
             If mSectionCount > 0 Then
                 mDataLoaded = True
@@ -373,20 +373,16 @@ Public Class clsIniFileReader
                 ReDim Preserve mSectionsOriginalCase(mSectionCount - 1)
                 ReDim Preserve mKeysBySection(mSectionCount - 1)
             End If
-        Catch ex As System.Exception
+        Catch ex As Exception
             Console.WriteLine("Error in clsIniFileReader->ReadIniFile: " & ex.Message)
             blnSuccess = False
-        Finally
-            If Not srInFile Is Nothing Then
-                srInFile.Close()
-            End If
         End Try
 
         Return blnSuccess
 
     End Function
 
-    Protected Function GetSectionIndex(ByVal strSectionName As String) As Integer
+    Protected Function GetSectionIndex(strSectionName As String) As Integer
         Dim intSectionIndex As Integer
 
         If mSectionsLowerCase Is Nothing Then
@@ -398,27 +394,27 @@ Public Class clsIniFileReader
         Return intSectionIndex
     End Function
 
-    Public Sub SaveSetting(ByVal strSectionName As String, ByVal strKeyName As String, ByVal strValue As String)
+    Public Sub SaveSetting(strSectionName As String, strKeyName As String, strValue As String)
         StoreKeyAndValue(strSectionName, strKeyName, strValue)
     End Sub
 
-    Public Sub SaveSetting(ByVal strSectionName As String, ByVal strKeyName As String, ByVal intValue As Integer)
+    Public Sub SaveSetting(strSectionName As String, strKeyName As String, intValue As Integer)
         StoreKeyAndValue(strSectionName, strKeyName, intValue.ToString)
     End Sub
 
-    Public Sub SaveSetting(ByVal strSectionName As String, ByVal strKeyName As String, ByVal dblValue As Double)
+    Public Sub SaveSetting(strSectionName As String, strKeyName As String, dblValue As Double)
         StoreKeyAndValue(strSectionName, strKeyName, dblValue.ToString)
     End Sub
 
-    Public Sub SaveSetting(ByVal strSectionName As String, ByVal strKeyName As String, ByVal sngValue As Single)
+    Public Sub SaveSetting(strSectionName As String, strKeyName As String, sngValue As Single)
         StoreKeyAndValue(strSectionName, strKeyName, sngValue.ToString)
     End Sub
 
-    Public Sub SaveSetting(ByVal strSectionName As String, ByVal strKeyName As String, ByVal blnValue As Boolean)
+    Public Sub SaveSetting(strSectionName As String, strKeyName As String, blnValue As Boolean)
         StoreKeyAndValue(strSectionName, strKeyName, blnValue.ToString)
     End Sub
 
-    Protected Sub StoreKeyAndValue(ByVal strSectionName As String, ByVal strKeyName As String, ByVal strValue As String)
+    Protected Sub StoreKeyAndValue(strSectionName As String, strKeyName As String, strValue As String)
         Dim intSectionIndex As Integer
 
         intSectionIndex = GetSectionIndex(strSectionName, True)
@@ -427,7 +423,7 @@ Public Class clsIniFileReader
         End If
     End Sub
 
-    Protected Sub StoreKeyAndValue(ByVal intSectionIndex As Integer, ByVal strKeyName As String, ByVal strValue As String)
+    Protected Sub StoreKeyAndValue(intSectionIndex As Integer, strKeyName As String, strValue As String)
         Dim intIndexMatch As Integer
 
         If intSectionIndex >= 0 And intSectionIndex < mKeysBySection.Length Then
@@ -456,8 +452,7 @@ Public Class clsIniFileReader
         End If
     End Function
 
-    Public Function WriteIniFile(ByVal strIniFilePath As String) As Boolean
-        Dim srOutFile As System.IO.StreamWriter
+    Public Function WriteIniFile(strIniFilePath As String) As Boolean
 
         Dim blnSuccess As Boolean
 
@@ -470,33 +465,30 @@ Public Class clsIniFileReader
                 ' Assume success for now
                 blnSuccess = True
 
-                srOutFile = New System.IO.StreamWriter(New System.IO.FileStream(strIniFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+                Using srOutFile = New StreamWriter(New FileStream(strIniFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
-                ' Update mIniFilePath
-                mIniFilePath = String.Copy(strIniFilePath)
+                    ' Update mIniFilePath
+                    mIniFilePath = String.Copy(strIniFilePath)
 
-                For intSectionIndex = 0 To mSectionCount - 1
-                    srOutFile.WriteLine(SECTION_LINE_START_CHAR & mSectionsOriginalCase(intSectionIndex) & SECTION_LINE_END_CHAR)
+                    For intSectionIndex = 0 To mSectionCount - 1
+                        srOutFile.WriteLine(SECTION_LINE_START_CHAR & mSectionsOriginalCase(intSectionIndex) & SECTION_LINE_END_CHAR)
 
-                    With mKeysBySection(intSectionIndex)
-                        For intKeyIndex = 0 To .Count - 1
-                            If Not .NamesOrignalCase(intKeyIndex) Is Nothing Then
-                                strValue = String.Copy(.Values(intKeyIndex))
-                                If strValue Is Nothing Then strValue = String.Empty
+                        With mKeysBySection(intSectionIndex)
+                            For intKeyIndex = 0 To .Count - 1
+                                If Not .NamesOrignalCase(intKeyIndex) Is Nothing Then
+                                    strValue = String.Copy(.Values(intKeyIndex))
+                                    If strValue Is Nothing Then strValue = String.Empty
 
-                                srOutFile.WriteLine(.NamesOrignalCase(intKeyIndex) & "=" & strValue)
-                            End If
-                        Next intKeyIndex
-                    End With
+                                    srOutFile.WriteLine(.NamesOrignalCase(intKeyIndex) & "=" & strValue)
+                                End If
+                            Next intKeyIndex
+                        End With
 
-                Next intSectionIndex
+                    Next intSectionIndex
 
-            Catch ex As System.Exception
+                End Using
+            Catch ex As Exception
                 blnSuccess = False
-            Finally
-                If Not srOutFile Is Nothing Then
-                    srOutFile.Close()
-                End If
             End Try
 
         Else

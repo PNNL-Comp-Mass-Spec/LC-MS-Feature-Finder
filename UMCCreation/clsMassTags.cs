@@ -5,7 +5,7 @@ namespace UMCCreation
 	/// <summary>
 	/// Summary description for clsMassTags.
 	/// </summary>
-	public class clsMassTags
+	public abstract class clsMassTags
 	{
 
 		public int mint_mass_tag_id ; 
@@ -18,9 +18,9 @@ namespace UMCCreation
 		public double mdbl_std_ganet ; 
 		public double mdbl_max_discriminant ; 
 		public int mint_num_obs_passing_filter ;
-		public int mint_mod_count ; 
+		public int mint_mod_count ;
 
-		public clsMassTags()
+	    protected clsMassTags()
 		{
 			//
 			// TODO: Add constructor logic here

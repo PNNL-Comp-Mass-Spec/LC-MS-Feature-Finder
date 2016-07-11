@@ -49,7 +49,7 @@ namespace UMCCreation
 
         public int CompareTo(IsotopePeak other)
         {
-            int result = this.mdbl_mono_mass.CompareTo(other.mdbl_mono_mass);
+            var result = this.mdbl_mono_mass.CompareTo(other.mdbl_mono_mass);
             if (result == 0)
             {
                 result = this.mint_lc_scan.CompareTo(other.mint_lc_scan); // This results in a stable sort, if the input is sorted by scan num (and is not IMS data)

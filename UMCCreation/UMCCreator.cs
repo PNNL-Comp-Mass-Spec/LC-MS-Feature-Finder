@@ -1,6 +1,4 @@
-﻿#define DEBUG
-#define DATAFILTERS
-
+﻿
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,7 +13,6 @@ namespace UMCCreation
     public class UMCCreator
     {
         private string mstr_inputFile;
-        private string outputDir;
 
         //data filters when loading data isotopic_fit, int min_intensity, int mono_mass_start, int mono_mass_end, bool process_mass_seg, int maxDataPoints, int monoMassSegOverlap
         private float mflt_isotopic_fit_filter;
@@ -24,7 +21,7 @@ namespace UMCCreation
         private float mflt_mono_mass_end;
         private bool mbln_process_mass_seg;
         private int mint_max_data_points;
-        private int mint_mono_mass_seg_overlap;
+        // Unused: private int mint_mono_mass_seg_overlap;
         private int mint_ims_min_scan_filter;
         private int mint_ims_max_scan_filter;
         private int mint_lc_min_scan_filter;
@@ -63,10 +60,10 @@ namespace UMCCreation
         public int mint_ims_max_scan;
 
         //public std::multimap<int, int> mmultimap_umc_2_peak_index ; 
-        public SortedDictionary<int, List<int>> mmultimap_umc_2_peak_index = new SortedDictionary<int, List<int>>();
-        public List<IsotopePeak> mvect_isotope_peaks = new List<IsotopePeak>();
-        public List<int> mvect_umc_num_members = new List<int>();
-        public List<UMC> mvect_umcs = new List<UMC>();
+        public readonly SortedDictionary<int, List<int>> mmultimap_umc_2_peak_index = new SortedDictionary<int, List<int>>();
+        public readonly List<IsotopePeak> mvect_isotope_peaks = new List<IsotopePeak>();
+        public readonly List<int> mvect_umc_num_members = new List<int>();
+        public readonly List<UMC> mvect_umcs = new List<UMC>();
 
         public UMCCreator()
         {
@@ -127,8 +124,8 @@ namespace UMCCreation
                     return double.MaxValue;
             }
 
-            double a_log_abundance = Math.Log10(a.mdbl_abundance);
-            double b_log_abundance = Math.Log10(b.mdbl_abundance);
+            var a_log_abundance = Math.Log10(a.mdbl_abundance);
+            var b_log_abundance = Math.Log10(b.mdbl_abundance);
 
             double sqrDist = 0;
 
@@ -142,7 +139,7 @@ namespace UMCCreation
             if (mbln_use_net)
             {
                 // Convert scan difference to Generic NET
-                double net_distance = (a.mint_lc_scan - b.mint_lc_scan) * 1.0 / (mint_lc_max_scan - mint_lc_min_scan);
+                var net_distance = (a.mint_lc_scan - b.mint_lc_scan) * 1.0 / (mint_lc_max_scan - mint_lc_min_scan);
                 sqrDist += net_distance * net_distance * mflt_wt_net * mflt_wt_net;
             }
             else
@@ -174,7 +171,7 @@ namespace UMCCreation
         {
             //string startTag; //will be defined based on header
 
-            int numPeaks = 0;
+            var numPeaks = 0;
             Reset();
             // Using a stream reader with a large buffer rather than a MemoryMappedFile
             using (
@@ -182,7 +179,7 @@ namespace UMCCreation
                     Encoding.ASCII, true, 65535))
             {
 
-                long file_len = stream.BaseStream.Length;
+                var file_len = stream.BaseStream.Length;
 
                 //columns for IMS data 
                 //'frame_num,ims_scan_num,charge,abundance,mz,fit,average_mw,monoisotopic_mw,mostabundant_mw,fwhm,signal_noise,mono_abundance,mono_plus2_abundance,orig_intensity,TIA_orig_intensity, drift_time,cumulative_drift_time\n'
@@ -190,7 +187,7 @@ namespace UMCCreation
                 //columns for LC-MS data
                 //scan_num,charge,abundance,mz,fit,average_mw,monoisotopic_mw,mostabundant_mw,fwhm,signal_noise,mono_abundance,mono_plus2_abundance/
 
-                int origLineNumber = 0;
+                var origLineNumber = 0;
                 mshort_percent_complete = 0;
                 mint_lc_min_scan = int.MaxValue;
                 mint_lc_max_scan = 0;
@@ -202,11 +199,8 @@ namespace UMCCreation
                 if (mshort_percent_complete > 99)
                     mshort_percent_complete = 99;
 
-                string buffer = stream.ReadLine();
+                var buffer = stream.ReadLine();
 
-#if DBUG
-                System.Console.WriteLine("Success = " + (buffer != null));
-#endif
                 if (buffer == null)
                 {
                     throw new Exception("Could not read file");
@@ -224,11 +218,11 @@ namespace UMCCreation
                     mbln_is_ims_data = false;
                 }
 
-#if DBUG
-                System.Console.WriteLine("Data file is IMS? (1=Yes, 0=No):: " + mbln_is_ims_data);
-#endif
+                // ReSharper disable once NotAccessedVariable
+                double fwhm = 0;
 
-                double fwhm = 0, s2n = 0;
+                // ReSharper disable once NotAccessedVariable
+                double s2n = 0;
 
                 while (!stream.EndOfStream)
                 {
@@ -239,16 +233,18 @@ namespace UMCCreation
                     }
                     pos += buffer.Length;
 
-                    IsotopePeak pk = new IsotopePeak();
-                    pk.mdbl_abundance = 0;
-                    pk.mdbl_i2_abundance = 0;
-                    pk.mdbl_average_mass = 0;
-                    pk.mflt_fit = 0;
-                    pk.mdbl_max_abundance_mass = 0;
-                    pk.mdbl_mono_mass = 0;
-                    pk.mdbl_mz = 0;
-                    pk.mshort_charge = 0;
-                    pk.mflt_ims_drift_time = 0;
+                    var pk = new IsotopePeak
+                    {
+                        mdbl_abundance = 0,
+                        mdbl_i2_abundance = 0,
+                        mdbl_average_mass = 0,
+                        mflt_fit = 0,
+                        mdbl_max_abundance_mass = 0,
+                        mdbl_mono_mass = 0,
+                        mdbl_mz = 0,
+                        mshort_charge = 0,
+                        mflt_ims_drift_time = 0
+                    };
 
                     // not using BaseStream.Position because it will always jump by the size of the StreamReader buffer.
                     mshort_percent_complete = (short) ((100.0 * pos) / file_len);
@@ -262,7 +258,7 @@ namespace UMCCreation
                         continue;
                     }
 
-                    int index = 0;
+                    var index = 0;
                     //in either case the first value is the lc_scan_num
                     if (tokens.Length > index && !string.IsNullOrWhiteSpace(tokens[index]))
                     {
@@ -359,7 +355,6 @@ namespace UMCCreation
                         {
                             pk.mflt_cum_drift_time = float.Parse(tokens[index].Trim());
                         }
-                        index++;
                     }
 
                     // Check here to see of MAP index is correct. Dameng
@@ -377,15 +372,12 @@ namespace UMCCreation
                             {
                                 if (numPeaks > mint_max_data_points)
                                 {
-                                    System.Console.WriteLine("I know this happens");
+                                    Console.WriteLine("I know this happens");
                                     numPeaks--;
                                     break;
                                 }
                             }
                         }
-#if DBUG
-                        System.Console.WriteLine("Adding peak ... " + ConsiderPeak(pk));
-#endif
 
                         //check if the min scans and max scans for both lc and ims need to be fixed
                         if (pk.mint_lc_scan <= mint_lc_min_scan)
@@ -414,9 +406,6 @@ namespace UMCCreation
 
                         mvect_isotope_peaks.Add(pk);
 
-#if DBUG
-                        pk.printPeak();
-#endif
                         //increment number of peaks read
                         numPeaks++;
                     }
@@ -455,26 +444,23 @@ namespace UMCCreation
                 var stream = new StreamReader(new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read),
                     Encoding.ASCII, true, 65535))
             {
-                long file_len = stream.BaseStream.Length;
+                var file_len = stream.BaseStream.Length;
 
-                string fileNameTag = "Filename:";
-                string startTag = "CS,  Abundance,   m/z,   Fit,    Average MW, Monoisotopic MW,    Most abundant MW";
-                string startTagIsotopicLabeled =
+                var fileNameTag = "Filename:";
+                var startTag = "CS,  Abundance,   m/z,   Fit,    Average MW, Monoisotopic MW,    Most abundant MW";
+                var startTagIsotopicLabeled =
                     "CS,  Abundance,   m/z,   Fit,    Average MW, Monoisotopic MW,    Most abundant MW,   Imono,   I+2";
-                string stopTag = "Processing stop time:";
-                bool isotopically_labeled = false;
-                bool is_first_scan = true;
-                bool is_pek_file_from_wiff = false;
+                var stopTag = "Processing stop time:";
+                var isotopically_labeled = false;
+                var is_first_scan = true;
+                var is_pek_file_from_wiff = false;
 
-                int numPeaks = 0;
+                var numPeaks = 0;
                 mshort_percent_complete = 0;
-                int mint_min_scan = int.MaxValue;
-                int mint_max_scan = 0;
+                var mint_min_scan = int.MaxValue;
+                var mint_max_scan = 0;
 
                 long pos = 0;
-                string buffer;
-
-                IsotopePeak pk;
 
                 while (!stream.EndOfStream)
                 {
@@ -484,7 +470,7 @@ namespace UMCCreation
                         mshort_percent_complete = 99;
 
                     // Give an empty string if ReadLine returns null
-                    buffer = stream.ReadLine() ?? "";
+                    var buffer = stream.ReadLine() ?? "";
                     pos += buffer.Length;
 
                     if (!ReadToLine(stream, ref buffer, fileNameTag, ref pos))
@@ -492,19 +478,21 @@ namespace UMCCreation
                         break;
                     }
 
-                    pk = new IsotopePeak();
-                    pk.mdbl_abundance = 0;
-                    pk.mdbl_i2_abundance = 0;
-                    pk.mdbl_average_mass = 0;
-                    pk.mflt_fit = 0;
-                    pk.mdbl_max_abundance_mass = 0;
-                    pk.mdbl_mono_mass = 0;
-                    pk.mdbl_mz = 0;
-                    pk.mshort_charge = 0;
-                    pk.mflt_ims_drift_time = 0;
+                    var pk = new IsotopePeak
+                    {
+                        mdbl_abundance = 0,
+                        mdbl_i2_abundance = 0,
+                        mdbl_average_mass = 0,
+                        mflt_fit = 0,
+                        mdbl_max_abundance_mass = 0,
+                        mdbl_mono_mass = 0,
+                        mdbl_mz = 0,
+                        mshort_charge = 0,
+                        mflt_ims_drift_time = 0
+                    };
 
                     // found file name. start at the end.
-                    int index = buffer.LastIndexOf('.') + 1;
+                    var index = buffer.LastIndexOf('.') + 1;
 
                     // wiff file pek files have a weird format. Another ICR2LS-ism.
                     if (is_first_scan)
@@ -755,16 +743,16 @@ namespace UMCCreation
 
         public void CreateUMCsSinglyLinkedWithAll()
         {
-            bool chargeStateMatch = true;
+            var chargeStateMatch = true;
             mshort_percent_complete = 0;
             mmultimap_umc_2_peak_index.Clear();
-            int numPeaks = mvect_isotope_peaks.Count;
-            for (int pkNum = 0; pkNum < numPeaks; pkNum++)
+            var numPeaks = mvect_isotope_peaks.Count;
+            for (var pkNum = 0; pkNum < numPeaks; pkNum++)
             {
                 mvect_isotope_peaks[pkNum].mint_umc_index = -1;
             }
 
-            List<IsotopePeak> vectTempPeaks = new List<IsotopePeak>();
+            var vectTempPeaks = new List<IsotopePeak>();
             //vectTempPeaks.AddRange(mvect_isotope_peaks.Select(p => p.Clone()).OrderBy(x => x.mdbl_mono_mass)); // Performs a stable sort (item ordering maintained for equivalent objects)
             vectTempPeaks.AddRange(mvect_isotope_peaks.Select(p => p.Clone()));
 
@@ -781,20 +769,17 @@ namespace UMCCreation
             // 2. If it does not belong to a UMC, move right comparing to all umcs in mass tolerance. For each match, calculate distance.
             //        a. Create new UMC and follow 1.
 
-            int currentIndex = 0;
+            var currentIndex = 0;
 
-            IsotopePeak currentPeak;
-            IsotopePeak matchPeak;
-            int numUmcsSoFar = 0;
-            double currentDistance = 0;
-            List<int> tempIndices = new List<int>(128);
+            var numUmcsSoFar = 0;
+            var tempIndices = new List<int>(128);
                 // used to store indices of isotope peaks that are moved from one umc to another.
 
             mshort_percent_complete = 0;
             while (currentIndex < numPeaks)
             {
                 mshort_percent_complete = (short) ((100.0 * currentIndex) / numPeaks);
-                currentPeak = vectTempPeaks[currentIndex];
+                var currentPeak = vectTempPeaks[currentIndex];
                 if (currentPeak.mint_umc_index == -1)
                 {
                     // create UMC
@@ -803,7 +788,7 @@ namespace UMCCreation
                     vectTempPeaks[currentIndex].mint_umc_index = numUmcsSoFar;
                     numUmcsSoFar++;
                 }
-                int matchIndex = currentIndex + 1;
+                var matchIndex = currentIndex + 1;
                 if (matchIndex == numPeaks)
                     break;
 
@@ -811,13 +796,13 @@ namespace UMCCreation
                 if (mbln_constraint_mono_mass_is_ppm)
                     massTolerance *= currentPeak.mdbl_mono_mass / 1000000.0; // Convert from ppm to Da tolerance
 
-                double maxMass = currentPeak.mdbl_mono_mass + massTolerance;
-                matchPeak = vectTempPeaks[matchIndex];
+                var maxMass = currentPeak.mdbl_mono_mass + massTolerance;
+                var matchPeak = vectTempPeaks[matchIndex];
                 while (matchPeak.mdbl_mono_mass < maxMass)
                 {
                     if (matchPeak.mint_umc_index != currentPeak.mint_umc_index)
                     {
-                        currentDistance = PeakDistance(currentPeak, matchPeak);
+                        var currentDistance = PeakDistance(currentPeak, matchPeak);
                         if (mbln_constraint_charge_state)
                         {
                             chargeStateMatch = (currentPeak.mshort_charge == matchPeak.mshort_charge);
@@ -832,10 +817,10 @@ namespace UMCCreation
                             else
                             {
                                 tempIndices.Clear();
-                                int numPeaksMerged = 0;
+                                var numPeaksMerged = 0;
                                 // merging time. Merge this guy's umc into the next guys UMC.
                                 var listAtIndex = mmultimap_umc_2_peak_index[currentPeak.mint_umc_index];
-                                for (int i = 0; i < listAtIndex.Count;)
+                                for (var i = 0; i < listAtIndex.Count;)
                                 {
                                     var deletePeakIndex = listAtIndex[i];
                                     tempIndices.Add(deletePeakIndex);
@@ -843,7 +828,7 @@ namespace UMCCreation
                                     listAtIndex.RemoveAt(i); // remove item at i and don't increment i
                                     numPeaksMerged++;
                                 }
-                                for (int mergedPeakNum = 0; mergedPeakNum < numPeaksMerged; mergedPeakNum++)
+                                for (var mergedPeakNum = 0; mergedPeakNum < numPeaksMerged; mergedPeakNum++)
                                 {
                                     AddUMCToMap(matchPeak.mint_umc_index, tempIndices[mergedPeakNum]);
                                 }
@@ -868,10 +853,10 @@ namespace UMCCreation
             numUmcsSoFar = 0;
             foreach (var item in mmultimap_umc_2_peak_index)
             {
-                int numMembers = 0;
+                var numMembers = 0;
                 foreach (var p in item.Value)
                 {
-                    IsotopePeak pk = vectTempPeaks[p];
+                    var pk = vectTempPeaks[p];
                     mvect_isotope_peaks[pk.mint_original_index].mint_umc_index = numUmcsSoFar;
                     numMembers++;
                 }
@@ -880,9 +865,9 @@ namespace UMCCreation
             }
             // now set the map object. 
             mmultimap_umc_2_peak_index.Clear();
-            for (int pkNum = 0; pkNum < numPeaks; pkNum++)
+            for (var pkNum = 0; pkNum < numPeaks; pkNum++)
             {
-                IsotopePeak pk = mvect_isotope_peaks[pkNum];
+                var pk = mvect_isotope_peaks[pkNum];
                 AddUMCToMap(pk.mint_umc_index, pkNum);
             }
             // DONE!! 
@@ -896,10 +881,10 @@ namespace UMCCreation
 
             foreach (var item in mmultimap_umc_2_peak_index)
             {
-                int currentUmcNum = item.Key;
+                var currentUmcNum = item.Key;
                 foreach (var p in item.Value)
                 {
-                    IsotopePeak pk = mvect_isotope_peaks[p];
+                    var pk = mvect_isotope_peaks[p];
                     stream.WriteLine("{0}\t{1}", currentUmcNum + featureStartIndex, pk.mint_line_number_in_file);
                 }
 
@@ -911,7 +896,7 @@ namespace UMCCreation
         //method can be called with either stdout or an output file to write to 
         public bool PrintUMCs(StreamWriter stream, bool print_members, int featureStartIndex)
         {
-            bool success = true;
+            var success = true;
             stream.Write("Feature_Index\tMonoisotopic_Mass\tAverage_Mono_Mass\tUMC_MW_Min\tUMC_MW_Max\tScan_Start" +
                          "\tScan_End\tScan\tUMC_Member_Count\tMax_Abundance\tAbundance\tClass_Rep_MZ\tClass_Rep_Charge");
             if (print_members)
@@ -920,11 +905,11 @@ namespace UMCCreation
             }
             stream.WriteLine();
 
-            int numPrinted = 1;
+            var numPrinted = 1;
             foreach (var item in mmultimap_umc_2_peak_index)
             {
-                int currentUmcNum = item.Key;
-                UMC current_umc = mvect_umcs[currentUmcNum];
+                var currentUmcNum = item.Key;
+                var current_umc = mvect_umcs[currentUmcNum];
                 stream.Write(
                     "{0}\t{1,4:F4}\t{2,4:F4}\t{3,4:F4}\t{4,4:F4}\t{5}\t{6}\t{7}\t{8}\t{9,4:F4}\t{10,4:F4}\t{11,4:F4}\t{12}\t",
                     current_umc.mint_umc_index + featureStartIndex, current_umc.mdbl_median_mono_mass,
@@ -938,7 +923,7 @@ namespace UMCCreation
                     if (print_members)
                     {
 
-                        IsotopePeak pk = mvect_isotope_peaks[p];
+                        var pk = mvect_isotope_peaks[p];
                         stream.Write("{0,4:F4}\t{1}\t{2,4:F4}", pk.mdbl_mono_mass, pk.mint_lc_scan, pk.mdbl_abundance);
                     }
                 }
@@ -959,20 +944,19 @@ namespace UMCCreation
 
         public void PrintUMCs(bool print_members)
         {
-            System.Console.Write(
+            Console.Write(
                 "UMCIndex\tUMCMonoMW\tAverageMonoMass\tUMCMWMin\tUMCMWMax\tScanStart\tScanEnd\tScanClassRep\tUMCMemberCount\tMaxAbundance\tUMCAbundance");
             if (print_members)
             {
-                System.Console.Write("\tData");
+                Console.Write("\tData");
             }
-            System.Console.WriteLine();
+            Console.WriteLine();
 
-            int numPrinted = 1;
             foreach (var item in mmultimap_umc_2_peak_index)
             {
-                int currentUmcNum = item.Key;
-                UMC current_umc = mvect_umcs[currentUmcNum];
-                System.Console.Write("{0}\t{1:F4}\t{2:F4}\t{3:F4}\t{4:F4}\t{5:F4}\t{6}\t{7}\t{8}\t{9:F0}\t{10:F0}",
+                var currentUmcNum = item.Key;
+                var current_umc = mvect_umcs[currentUmcNum];
+                Console.Write("{0}\t{1:F4}\t{2:F4}\t{3:F4}\t{4:F4}\t{5:F4}\t{6}\t{7}\t{8}\t{9:F0}\t{10:F0}",
                     current_umc.mint_umc_index, current_umc.mdbl_median_mono_mass, current_umc.mdbl_average_mono_mass,
                     current_umc.mdbl_min_mono_mass, current_umc.mdbl_max_mono_mass, current_umc.mint_start_scan,
                     current_umc.mint_stop_scan, current_umc.mint_max_abundance_scan, current_umc.min_num_members,
@@ -981,25 +965,24 @@ namespace UMCCreation
                 {
                     if (print_members)
                     {
-                        IsotopePeak pk = mvect_isotope_peaks[p];
-                        System.Console.Write("\t{0:F4}\t{1}\t{2:F0}", pk.mdbl_mono_mass, pk.mint_lc_scan,
+                        var pk = mvect_isotope_peaks[p];
+                        Console.Write("\t{0:F4}\t{1}\t{2:F0}", pk.mdbl_mono_mass, pk.mint_lc_scan,
                             pk.mdbl_abundance);
                     }
-                }
-                numPrinted++;
-                System.Console.WriteLine();
+                }                
+                Console.WriteLine();
             }
         }
 
         public void PrintPeaks()
         {
-            int numPeaks = mvect_isotope_peaks.Count;
-            System.Console.WriteLine("Scan\tCharge\tAbundance\tMZ\tFit\tAverageMass\tMonoMass\tMaxMass\n");
+            var numPeaks = mvect_isotope_peaks.Count;
+            Console.WriteLine("Scan\tCharge\tAbundance\tMZ\tFit\tAverageMass\tMonoMass\tMaxMass\n");
 
-            for (int i = 0; i < numPeaks; i++)
+            for (var i = 0; i < numPeaks; i++)
             {
-                IsotopePeak pk = mvect_isotope_peaks[i];
-                System.Console.WriteLine("{0}\t{1}\t{2:F0}\t{3:F4}\t{4:F3}\t{5:F4}\t{6:F4}\t{7:F4}", pk.mint_lc_scan,
+                var pk = mvect_isotope_peaks[i];
+                Console.WriteLine("{0}\t{1}\t{2:F0}\t{3:F4}\t{4:F3}\t{5:F4}\t{6:F4}\t{7:F4}", pk.mint_lc_scan,
                     pk.mshort_charge, pk.mdbl_abundance, pk.mdbl_mz, pk.mflt_fit, pk.mdbl_average_mass,
                     pk.mdbl_mono_mass,
                     pk.mdbl_max_abundance_mass);
@@ -1017,7 +1000,7 @@ namespace UMCCreation
             bool success;
 
             // Create the file where the LCMS Features will be written
-            string completeFileName = baseFileName + "_LCMSFeatures.txt";
+            var completeFileName = baseFileName + "_LCMSFeatures.txt";
             using (
                 var file =
                     new StreamWriter(new FileStream(completeFileName, FileMode.Create, FileAccess.Write, FileShare.Read))
@@ -1027,7 +1010,7 @@ namespace UMCCreation
             }
             if (!success)
             {
-                return success;
+                return false;
             }
 
             // Create the file where the "Features to Peak Map" will be written
@@ -1092,31 +1075,31 @@ namespace UMCCreation
             mvect_umcs.Clear();
             mvect_umcs.Capacity = mvect_umc_num_members.Count;
 
-            List<double> vect_mass = new List<double>();
+            var vect_mass = new List<double>();
 
             mshort_percent_complete = 0;
-            int num_umcs = mvect_umcs.Count;
+            var num_umcs = mvect_umcs.Count;
 
             foreach (var item in mmultimap_umc_2_peak_index)
             {
                 vect_mass.Clear();
-                int umc_index = item.Key;
+                var umc_index = item.Key;
                 mshort_percent_complete = (short) ((100.0 * umc_index) / num_umcs);
-                int numMembers = mvect_umc_num_members[umc_index];
-                int minScan = int.MaxValue;
-                int maxScan = int.MinValue;
-                double minMass = double.MaxValue;
-                double maxMass = -1 * double.MaxValue;
-                double maxAbundance = -1 * double.MaxValue;
+                var numMembers = mvect_umc_num_members[umc_index];
+                var minScan = int.MaxValue;
+                var maxScan = int.MinValue;
+                var minMass = double.MaxValue;
+                var maxMass = -1 * double.MaxValue;
+                var maxAbundance = -1 * double.MaxValue;
                 double sumAbundance = 0;
                 double sumMonoMass = 0;
-                int maxAbundanceScan = 0;
+                var maxAbundanceScan = 0;
                 short classRepCharge = 0;
                 double classRepMz = 0;
 
                 foreach (var p in item.Value)
                 {
-                    IsotopePeak pk = mvect_isotope_peaks[p];
+                    var pk = mvect_isotope_peaks[p];
                     vect_mass.Add(pk.mdbl_mono_mass);
 
                     if (pk.mint_lc_scan > maxScan)
@@ -1143,22 +1126,24 @@ namespace UMCCreation
 
                 vect_mass.Sort();
 
-                var new_umc = new UMC();
-                new_umc.mint_umc_index = umc_index;
-                new_umc.min_num_members = numMembers;
-                new_umc.mint_start_scan = minScan;
-                new_umc.mint_stop_scan = maxScan;
-                new_umc.mint_max_abundance_scan = maxAbundanceScan;
+                var new_umc = new UMC
+                {
+                    mint_umc_index = umc_index,
+                    min_num_members = numMembers,
+                    mint_start_scan = minScan,
+                    mint_stop_scan = maxScan,
+                    mint_max_abundance_scan = maxAbundanceScan,
+                    mdbl_max_abundance = maxAbundance,
+                    mdbl_sum_abundance = sumAbundance,
+                    mdbl_min_mono_mass = minMass,
+                    mdbl_max_mono_mass = maxMass,
+                    mdbl_average_mono_mass = sumMonoMass / numMembers,
+                    mdbl_class_rep_mz = classRepMz,
+                    mshort_class_rep_charge = classRepCharge
+                };
 
-                new_umc.mdbl_max_abundance = maxAbundance;
-                new_umc.mdbl_sum_abundance = sumAbundance;
 
-                new_umc.mdbl_min_mono_mass = minMass;
-                new_umc.mdbl_max_mono_mass = maxMass;
-                new_umc.mdbl_average_mono_mass = sumMonoMass / numMembers;
 
-                new_umc.mdbl_class_rep_mz = classRepMz;
-                new_umc.mshort_class_rep_charge = classRepCharge;
 
                 if (numMembers % 2 == 1)
                 {
@@ -1175,22 +1160,22 @@ namespace UMCCreation
         public void RemoveShortUMCs(int min_length)
         {
             // first reset all isotope peak umc indices to -1. 
-            int numIsotopePeaks = mvect_isotope_peaks.Count;
-            for (int peakNum = 0; peakNum < numIsotopePeaks; peakNum++)
+            var numIsotopePeaks = mvect_isotope_peaks.Count;
+            for (var peakNum = 0; peakNum < numIsotopePeaks; peakNum++)
             {
                 mvect_isotope_peaks[peakNum].mint_umc_index = -1;
             }
 
-            int numUmcsSoFar = 0;
+            var numUmcsSoFar = 0;
             mshort_percent_complete = 0;
 
-            int num_umcs = mmultimap_umc_2_peak_index.Sum(i => i.Value.Count);
+            var num_umcs = mmultimap_umc_2_peak_index.Sum(i => i.Value.Count);
             foreach (var item in mmultimap_umc_2_peak_index)
             {
-                int currentOldUmcNum = item.Key;
+                var currentOldUmcNum = item.Key;
                 mshort_percent_complete = (short) ((100.0 * currentOldUmcNum) / num_umcs);
 
-                int numMembers = mvect_umc_num_members[currentOldUmcNum];
+                var numMembers = mvect_umc_num_members[currentOldUmcNum];
                 foreach (var p in item.Value)
                 {
                     if (numMembers >= min_length)
@@ -1207,9 +1192,9 @@ namespace UMCCreation
             mvect_umc_num_members.RemoveRange(numUmcsSoFar, mvect_umc_num_members.Count - numUmcsSoFar);
             // now set the map object. 
             mmultimap_umc_2_peak_index.Clear();
-            for (int pkNum = 0; pkNum < numIsotopePeaks; pkNum++)
+            for (var pkNum = 0; pkNum < numIsotopePeaks; pkNum++)
             {
-                IsotopePeak pk = mvect_isotope_peaks[pkNum];
+                var pk = mvect_isotope_peaks[pkNum];
                 if (pk.mint_umc_index != -1)
                 {
                     AddUMCToMap(pk.mint_umc_index, pkNum);
@@ -1288,13 +1273,13 @@ namespace UMCCreation
 
         public bool withinMassTolerance(double observedMass, double realMass)
         {
-            double massDifferenceInPPM = Math.Abs(realMass - observedMass) * 1000000 / realMass;
+            var massDifferenceInPPM = Math.Abs(realMass - observedMass) * 1000000 / realMass;
             return (massDifferenceInPPM <= mflt_constraint_mono_mass);
         }
 
         public void SetFilterOptions(float isotopic_fit, int min_intensity, int min_lc_scan, int max_lc_scan,
             int min_ims_scan, int max_ims_scan, float mono_mass_start, float mono_mass_end, bool process_mass_seg,
-            int max_data_points, int mono_mass_seg_overlap, float mono_mass_seg_size)
+            int max_data_points, float mono_mass_seg_size)
         {
             mflt_isotopic_fit_filter = isotopic_fit;
             mint_min_intensity = min_intensity;
@@ -1302,7 +1287,7 @@ namespace UMCCreation
             mflt_mono_mass_end = mono_mass_end;
             mbln_process_mass_seg = process_mass_seg;
             mint_max_data_points = max_data_points;
-            mint_mono_mass_seg_overlap = mono_mass_seg_overlap;
+            // Unused: mint_mono_mass_seg_overlap = mono_mass_seg_overlap;
             mint_lc_min_scan_filter = min_lc_scan;
             mint_lc_max_scan_filter = max_lc_scan;
             mint_ims_min_scan_filter = min_ims_scan;
@@ -1381,10 +1366,10 @@ namespace UMCCreation
             mvect_isotope_peaks.Clear();
             mvect_isotope_peaks.AddRange(vectPks);
 
-            int numPeaks = mvect_isotope_peaks.Count;
-            for (int i = 0; i < numPeaks; i++)
+            var numPeaks = mvect_isotope_peaks.Count;
+            for (var i = 0; i < numPeaks; i++)
             {
-                IsotopePeak pk = mvect_isotope_peaks[i];
+                var pk = mvect_isotope_peaks[i];
                 if (pk.mint_lc_scan > mint_lc_max_scan)
                     mint_lc_max_scan = pk.mint_lc_scan;
                 if (pk.mint_lc_scan < mint_lc_min_scan)
@@ -1398,11 +1383,7 @@ namespace UMCCreation
             set { mstr_inputFile = value; }
         }
 
-        public string OutputDirectory
-        {
-            get { return outputDir; }
-            set { outputDir = value; }
-        }
+        public string OutputDirectory { get; set; }
 
         public float GetSegmentSize()
         {

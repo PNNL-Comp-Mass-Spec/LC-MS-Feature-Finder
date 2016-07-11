@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Globalization;
 using System.IO;
 
 namespace UMCCreation
@@ -9,7 +11,7 @@ namespace UMCCreation
         // considered code from http://www.codeproject.com/Articles/1966/An-INI-file-handling-class-using-C
         // Discarded that choice since the kernel function call is apparently expensive, and reading the file is easy.
 
-        public string _path;
+        public string IniFilePath { get; }
 
         /// <summary>
         /// INIFile Constructor.
@@ -17,35 +19,35 @@ namespace UMCCreation
         /// <param name="path"></param>
         public IniReader(string path)
         {
-            _path = path;
+            IniFilePath = path;
             ParseIniFile();
         }
 
         public int ReadInteger(string szSection, string szKey, int iDefaultValue)
         {
-            string result = ReadString(szSection, szKey, iDefaultValue.ToString()).Trim();
-            int iResult = int.Parse(result);
+            var result = ReadString(szSection, szKey, iDefaultValue.ToString()).Trim();
+            var iResult = int.Parse(result);
             return iResult;
         }
 
         public float ReadFloat(string szSection, string szKey, float fltDefaultValue)
         {
-            string result = ReadString(szSection, szKey, fltDefaultValue.ToString()).Trim();
-            float fltResult = float.Parse(result);
+            var result = ReadString(szSection, szKey, fltDefaultValue.ToString(CultureInfo.InvariantCulture)).Trim();
+            var fltResult = float.Parse(result);
             return fltResult;
         }
 
         public double ReadDouble(string szSection, string szKey, double dblDefaultValue)
         {
-            string result = ReadString(szSection, szKey, dblDefaultValue.ToString()).Trim();
-            double dblResult = double.Parse(result);
+            var result = ReadString(szSection, szKey, dblDefaultValue.ToString(CultureInfo.InvariantCulture)).Trim();
+            var dblResult = double.Parse(result);
             return dblResult;
         }
 
         public bool ReadBoolean(string szSection, string szKey, bool bolDefaultValue)
         {
-            string result = ReadString(szSection, szKey, bolDefaultValue.ToString()).Trim();
-            bool bolResult = bool.Parse(result);
+            var result = ReadString(szSection, szKey, bolDefaultValue.ToString()).Trim();
+            var bolResult = bool.Parse(result);
             return bolResult;
         }
 
@@ -62,14 +64,14 @@ namespace UMCCreation
         /// <summary>
         /// Storing the whole file in memory, since it is a small file.
         /// </summary>
-        private Dictionary<string, Dictionary<string, string>> _iniFileValues = new Dictionary<string, Dictionary<string, string>>();
+        private readonly Dictionary<string, Dictionary<string, string>> _iniFileValues = new Dictionary<string, Dictionary<string, string>>();
 
         /// <summary>
         /// Read the whole file into the <see cref="_iniFileValues"/> dictionary
         /// </summary>
         private void ParseIniFile()
         {
-            using (var reader = new StreamReader(new FileStream(_path, FileMode.Open, FileAccess.Read, FileShare.Read)))
+            using (var reader = new StreamReader(new FileStream(IniFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
             {
                 var section = "";
                 _iniFileValues.Add(section, new Dictionary<string, string>());
