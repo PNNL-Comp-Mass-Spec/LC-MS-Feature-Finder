@@ -2,7 +2,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.40629.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FeatureFinder", "FeatureFinder.csproj", "{1B6D6886-FC23-4D05-BF60-2F0DA74A7717}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LCMSFeatureFinder_VB", "LCMSFeatureFinder_VB\LCMSFeatureFinder.vbproj", "{D2C229A0-9AFE-40C5-9955-28F7BBDFAE59}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UMCCreation", "UMCCreation\UMCCreation.csproj", "{7C9DA11D-B530-4A63-90A0-41CA6C1EC5FD}"
 EndProject
@@ -14,10 +14,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{1B6D6886-FC23-4D05-BF60-2F0DA74A7717}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1B6D6886-FC23-4D05-BF60-2F0DA74A7717}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1B6D6886-FC23-4D05-BF60-2F0DA74A7717}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1B6D6886-FC23-4D05-BF60-2F0DA74A7717}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D2C229A0-9AFE-40C5-9955-28F7BBDFAE59}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D2C229A0-9AFE-40C5-9955-28F7BBDFAE59}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D2C229A0-9AFE-40C5-9955-28F7BBDFAE59}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D2C229A0-9AFE-40C5-9955-28F7BBDFAE59}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7C9DA11D-B530-4A63-90A0-41CA6C1EC5FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7C9DA11D-B530-4A63-90A0-41CA6C1EC5FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7C9DA11D-B530-4A63-90A0-41CA6C1EC5FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
