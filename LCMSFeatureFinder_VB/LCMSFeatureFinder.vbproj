@@ -101,10 +101,6 @@
     <Reference Include="System.Xml">
       <Name>System.XML</Name>
     </Reference>
-    <Reference Include="UMCManipulation, Version=1.0.2497.27026, Culture=neutral">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\UMCCreationDLL\UMCManipulation.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Import Include="Microsoft.VisualBasic" />
@@ -131,12 +127,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\UMCCreationDLL\UMCCreation.vcxproj">
-      <Project>{8A102398-56CC-4AEE-A09C-B98741CB6ECA}</Project>
-      <Name>UMCCreation</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
@@ -158,6 +148,16 @@
       <ProductName>Windows Installer 3.1</ProductName>
       <Install>true</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\UMCCreation\UMCCreation.csproj">
+      <Project>{7c9da11d-b530-4a63-90a0-41ca6c1ec5fd}</Project>
+      <Name>UMCCreation</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\UMCManipulation\UMCManipulation.csproj">
+      <Project>{c1a9685d-f6e7-4ffb-9535-34ca76ce9718}</Project>
+      <Name>UMCManipulation</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
