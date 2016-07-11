@@ -1,0 +1,33 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.40629.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UMCCreation", "UMCCreationDLL\UMCCreation.vcxproj", "{8A102398-56CC-4AEE-A09C-B98741CB6ECA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FeatureFinder", "FeatureFinder_C++.csproj", "{1B6D6886-FC23-4D05-BF60-2F0DA74A7717}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UMCManipulation", "UMCManipulation\UMCManipulation_C++.csproj", "{C1A9685D-F6E7-4FFB-9535-34CA76CE9718}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8A102398-56CC-4AEE-A09C-B98741CB6ECA}.Debug|x86.ActiveCfg = Debug|Win32
+		{8A102398-56CC-4AEE-A09C-B98741CB6ECA}.Debug|x86.Build.0 = Debug|Win32
+		{8A102398-56CC-4AEE-A09C-B98741CB6ECA}.Release|x86.ActiveCfg = Release|Win32
+		{8A102398-56CC-4AEE-A09C-B98741CB6ECA}.Release|x86.Build.0 = Release|Win32
+		{1B6D6886-FC23-4D05-BF60-2F0DA74A7717}.Debug|x86.ActiveCfg = Debug|x86
+		{1B6D6886-FC23-4D05-BF60-2F0DA74A7717}.Debug|x86.Build.0 = Debug|x86
+		{1B6D6886-FC23-4D05-BF60-2F0DA74A7717}.Release|x86.ActiveCfg = Release|x86
+		{1B6D6886-FC23-4D05-BF60-2F0DA74A7717}.Release|x86.Build.0 = Release|x86
+		{C1A9685D-F6E7-4FFB-9535-34CA76CE9718}.Debug|x86.ActiveCfg = Debug|x86
+		{C1A9685D-F6E7-4FFB-9535-34CA76CE9718}.Debug|x86.Build.0 = Debug|x86
+		{C1A9685D-F6E7-4FFB-9535-34CA76CE9718}.Release|x86.ActiveCfg = Release|x86
+		{C1A9685D-F6E7-4FFB-9535-34CA76CE9718}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

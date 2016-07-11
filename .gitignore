@@ -4,3 +4,5 @@ UMCCreationDLL/Debug/
 UMCCreationDLL/Release/
 *.opensdf
 *.user
+packages/
+UMCCreationDLL/x64/

@@ -300,19 +300,23 @@ namespace FeatureFinder
 
 		public void invokeUMCCreator()
 		{
+#if !(DEBUG)
 			try
 			{
+#endif
 				UMCCreation.clsUMCCreator c = new clsUMCCreator();
 				c.OptionsFileName = mstr_controlFile;
 
                 // This is where UMC creator code is called
 				c.LoadFindUMCs();
+#if !(DEBUG)
 			}
 			catch(Exception c)
 			{
 				Console.WriteLine(c.Message);
 				Console.WriteLine(c.StackTrace);
 			}
+#endif
 		}
 	
 		/// <summary>
