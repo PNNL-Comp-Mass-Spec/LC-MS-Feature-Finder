@@ -1,7 +1,10 @@
 Option Strict On
 
+Imports System.Collections.Generic
 Imports System.IO
 Imports System.Reflection
+Imports System.Threading
+
 ' This module reads a text file with mass and intensity data for MS spectra
 ' and determines the LC-MS features present using UMCCreation.dll
 '
@@ -11,7 +14,7 @@ Imports System.Reflection
 ' Copyright 2007, Battelle Memorial Institute.  All Rights Reserved.
 
 ' E-mail: matthew.monroe@pnl.gov or matt@alchemistmatt.com
-' Website: http://ncrr.pnl.gov/ or http://www.sysbio.org/resources/staff/
+' Website: http://omics.pnl.gov/ or http://www.sysbio.org/resources/staff/ or http://panomics.pnnl.gov/
 ' -------------------------------------------------------------------------------
 ' 
 ' Licensed under the Apache License, Version 2.0; you may not use this file except
@@ -29,19 +32,18 @@ Imports System.Reflection
 
 Module modMain
 
-	Public Const PROGRAM_DATE As String = "July 11, 2016"
+    Public Const PROGRAM_DATE As String = "July 26, 2016"
 
     Private mInputDataFilePath As String
     Private mOutputFileOrFolderPath As String
-
+    
     Private mParameterFilePath As String            ' Optional
 
-    Private mQuietMode As Boolean
+    Private mShowExampleIni As Boolean
 
     Public Function Main() As Integer
         ' Returns 0 if no error, error code if an error
 
-        Dim intReturnCode As Integer
         Dim objLCMSFeatureFinder As clsLCMSFeatureFinder
         Dim objParseCommandLine As New clsParseCommandLine
 
@@ -49,7 +51,7 @@ Module modMain
         Dim blnSuccess As Boolean
 
         ' Initialize default values
-        intReturnCode = 0
+        Dim intReturnCode = 0
 
         mInputDataFilePath = String.Empty
         mOutputFileOrFolderPath = String.Empty
@@ -62,7 +64,12 @@ Module modMain
                 If SetOptionsUsingCommandLineParameters(objParseCommandLine) Then blnProceed = True
             End If
 
-            If objParseCommandLine.ParameterCount = 0 OrElse Not blnProceed OrElse
+            If mShowExampleIni Then
+                ShowExampleIniFile()
+                return 0
+            End If
+
+            If Not blnProceed OrElse
                objParseCommandLine.NeedToShowHelp OrElse
                mInputDataFilePath.Length = 0 Then
                 ShowProgramHelp()
@@ -71,7 +78,6 @@ Module modMain
                 objLCMSFeatureFinder = New clsLCMSFeatureFinder
 
                 With objLCMSFeatureFinder
-                    .ShowMessages = Not mQuietMode
 
                     ''If Not mParameterFilePath Is Nothing AndAlso mParameterFilePath.Length > 0 Then
                     ''    .LoadParameterFileSettings(mParameterFilePath)
@@ -84,19 +90,19 @@ Module modMain
                     intReturnCode = 0
                 Else
                     intReturnCode = objLCMSFeatureFinder.ErrorCode
-                    If intReturnCode <> 0 AndAlso Not mQuietMode Then
-                        MsgBox("Error while processing: " & objLCMSFeatureFinder.GetErrorMessage(), MsgBoxStyle.Exclamation Or MsgBoxStyle.OKOnly, "Error")
+                    If intReturnCode =0 Then
+                        ShowErrorMessage("Unknown error while processing; error code: " & objLCMSFeatureFinder.ErrorCode)
+                    Else
+                        ShowErrorMessage("Error while processing: " & objLCMSFeatureFinder.GetErrorMessage())
                     End If
+
+                    System.Threading.Thread.Sleep(750)
                 End If
 
             End If
-
+            
         Catch ex As Exception
-            If mQuietMode Then
-                Throw
-            Else
-                MsgBox("Error occurred: " & ControlChars.NewLine & ex.Message, MsgBoxStyle.Exclamation Or MsgBoxStyle.OKOnly, "Error")
-            End If
+            ShowErrorMessage("Error occurred in modMain->Main: " & Environment.NewLine & ex.Message)
             intReturnCode = -1
         End Try
 
@@ -108,7 +114,7 @@ Module modMain
         ' Returns True if no problems; otherwise, returns false
 
 		Dim strValue As String = String.Empty
-        Dim strValidParameters = New String() {"I", "O", "P", "Q"}
+        Dim strValidParameters = New String() {"I", "O", "P", "ShowIni"}
 
         Try
             ' Make sure no invalid parameters are present
@@ -118,54 +124,126 @@ Module modMain
 
                 ' Query objParseCommandLine to see if various parameters are present
                 With objParseCommandLine
+                    If .NonSwitchParameterCount > 0 Then
+                        mInputDataFilePath = .RetrieveNonSwitchParameter(0)
+                    End If
+
                     If .RetrieveValueForParameter("I", strValue) Then mInputDataFilePath = strValue
                     If .RetrieveValueForParameter("O", strValue) Then mOutputFileOrFolderPath = strValue
 
                     If .RetrieveValueForParameter("P", strValue) Then mParameterFilePath = strValue
 
-                    If .RetrieveValueForParameter("Q", strValue) Then mQuietMode = True
+                    If .IsParameterPresent("ShowIni") Then
+                        mShowExampleIni = True
+                    End If
+
                 End With
 
                 Return True
             End If
 
         Catch ex As Exception
-            If mQuietMode Then
-                Throw New Exception("Error parsing the command line parameters", ex)
-            Else
-                MsgBox("Error parsing the command line parameters: " & ControlChars.NewLine & ex.Message, MsgBoxStyle.Exclamation Or MsgBoxStyle.OKOnly, "Error")
-            End If
-            return false
+            ShowErrorMessage("Error parsing the command line parameters: " & Environment.NewLine & ex.Message)
         End Try
+        Return False
 
     End Function
 
+    Private Sub ShowErrorMessage(strMessage As String)
+        Dim strSeparator = "------------------------------------------------------------------------------"
+
+        Console.WriteLine()
+        Console.WriteLine(strSeparator)
+        Console.WriteLine(strMessage)
+        Console.WriteLine(strSeparator)
+        Console.WriteLine()
+
+        WriteToErrorStream(strMessage)
+    End Sub
+
+    Private Sub ShowErrorMessage(strTitle As String, items As List(Of String))
+        Dim strSeparator = "------------------------------------------------------------------------------"
+        Dim strMessage As String
+
+        Console.WriteLine()
+        Console.WriteLine(strSeparator)
+        Console.WriteLine(strTitle)
+        strMessage = strTitle & ":"
+
+        For Each item As String In items
+            Console.WriteLine("   " + item)
+            strMessage &= " " & item
+        Next
+        Console.WriteLine(strSeparator)
+        Console.WriteLine()
+
+        WriteToErrorStream(strMessage)
+    End Sub
+
+    Private Sub ShowExampleIniFile()
+        Console.WriteLine()
+        Console.WriteLine("[UMCCreationOptions]")
+        Console.WriteLine("MonoMassWeight=0.01")
+        Console.WriteLine("MonoMassConstraint=10")
+        Console.WriteLine("MonoMassConstraintIsPPM=True")
+        Console.WriteLine("AvgMassWeight=0")
+        Console.WriteLine("AvgMassConstraint=10")
+        Console.WriteLine("AvgMassConstraintIsPPM=True")
+        Console.WriteLine("LogAbundanceWeight=0.1")
+        Console.WriteLine("NETWeight=15")
+        Console.WriteLine("FitWeight=0.1")
+        Console.WriteLine("ScanWeight=0.005")
+        Console.WriteLine("IMSDriftTimeWeight=0")
+        Console.WriteLine("MaxDistance=0.1")
+        Console.WriteLine("UseGenericNET=True")
+        Console.WriteLine("MinScan=0")
+        Console.WriteLine("MaxScan=0")
+        Console.WriteLine("MinFeatureLengthPoints=2")
+        Console.WriteLine("UseCharge=False")
+        Console.WriteLine()
+    End Sub
+
     Private Sub ShowProgramHelp()
 
-        Dim strSyntax As String
-		Try
+        Try
+            Dim exeName = Path.GetFileName(Assembly.GetExecutingAssembly().Location)
 
-			strSyntax = "This program will read a text file with mass and intensity data for MS spectra and determine the LC-MS features present using UMCCreation.dll." & ControlChars.NewLine & ControlChars.NewLine
-			strSyntax &= "Program syntax:" & ControlChars.NewLine & Path.GetFileName(Assembly.GetExecutingAssembly().Location)
-			strSyntax &= " /I:InputFileName.txt [/O:OutputFileName.txt]" & ControlChars.NewLine & ControlChars.NewLine
+            Console.WriteLine("This program will read a text file with mass and intensity data for MS spectra and determine the LC-MS features present using UMCCreation.dll.")
+            Console.WriteLine()
+            Console.WriteLine("Program syntax:" & ControlChars.NewLine & exeName)
+            Console.WriteLine(" /I:InputFileName.txt [/O:OutputFileName.txt] [/ShowIni]")
+            Console.WriteLine()
+            Console.WriteLine("The input file name is required. If the filename contains spaces, surround it with double quotes. ")
+            Console.WriteLine()
+            Console.WriteLine("If the output file name is not supplied, it will be auto-generated as InputFileName_Features.txt. ")
+            Console.WriteLine()
+            Console.WriteLine("This program will look for a .Ini file with the same name as the input file, but with extension .Ini")
+            Console.WriteLine("If found, the .Ini file is processed to load the weight values to use when clustering the data.")
+            Console.WriteLine("To se an example .ini File, use " & exeName & " /ShowIni")
+            Console.WriteLine()
 
-			strSyntax &= "The input file name is required. If the filename contains spaces, then surround it with double quotes. " &
-						 "If the output file name is not supplied, then it will be auto-generated as InputFileName_Features.txt. " &
-						 "This program will look for a .Ini file with the same name as the input file, but with extension .Ini  " &
-						 "If found, then it reads the .Ini file to load the weight values to use when clustering the data." & ControlChars.NewLine & ControlChars.NewLine
+            Console.WriteLine("Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2007")
+            Console.WriteLine("Copyright 2007, Battelle Memorial Institute.  All Rights Reserved.")
+            Console.WriteLine()
+            Console.WriteLine("E-mail: matthew.monroe@pnl.gov or matt@alchemistmatt.com")
+            Console.WriteLine("Website: http://omics.pnl.gov/ or http://panomics.pnnl.gov/")
 
-			strSyntax &= "Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2007" & ControlChars.NewLine
-			strSyntax &= "Copyright 2007, Battelle Memorial Institute.  All Rights Reserved." & ControlChars.NewLine & ControlChars.NewLine
+            Thread.Sleep(750)
 
-			strSyntax &= "E-mail: matthew.monroe@pnl.gov or matt@alchemistmatt.com" & ControlChars.NewLine
-			strSyntax &= "Website: http://ncrr.pnl.gov/ or http://www.sysbio.org/resources/staff/"
-
-			Console.WriteLine(strSyntax)
-
-		Catch ex As Exception
-			Console.WriteLine("Error displaying the program syntax: " & ex.Message)
-		End Try
+        Catch ex As Exception
+            ShowErrorMessage("Error displaying the program syntax: " & ex.Message)
+        End Try
 
     End Sub
+
+    Private Sub WriteToErrorStream(strErrorMessage As String)
+        Try
+            Using swErrorStream = New StreamWriter(Console.OpenStandardError())
+                swErrorStream.WriteLine(strErrorMessage)
+            End Using
+        Catch ex As Exception
+			' Ignore errors here
+		End Try
+	End Sub
 
 End Module

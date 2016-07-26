@@ -15,7 +15,7 @@ Imports UMCCreation
 ' Copyright 2007, Battelle Memorial Institute.  All Rights Reserved.
 
 ' E-mail: matthew.monroe@pnl.gov or matt@alchemistmatt.com
-' Website: http://ncrr.pnl.gov/ or http://www.sysbio.org/resources/staff/
+' Website: http://omics.pnl.gov/ or http://www.sysbio.org/resources/staff/ or http://panomics.pnnl.gov/
 ' -------------------------------------------------------------------------------
 ' 
 ' Licensed under the Apache License, Version 2.0; you may not use this file except
@@ -141,7 +141,6 @@ Public Class clsLCMSFeatureFinder
 #Region "Classwide Variables"
     Protected mFileDate As String
     Protected mErrorCode As eLCMSFeatureFinderErrorCodes
-    Protected mShowMessages As Boolean
 
     Protected mProgressStepDescription As String
     Protected mProgressPercentComplete As Single        ' Ranges from 0 to 100, but can contain decimal percentage values
@@ -189,15 +188,6 @@ Public Class clsLCMSFeatureFinder
         Get
             Return CType(Math.Round(mProgressPercentComplete, 2), Single)
         End Get
-    End Property
-
-    Public Property ShowMessages() As Boolean
-        Get
-            Return mShowMessages
-        End Get
-        Set(Value As Boolean)
-            mShowMessages = Value
-        End Set
     End Property
 
     Public ReadOnly Property StatusMessage() As String
@@ -385,8 +375,8 @@ Public Class clsLCMSFeatureFinder
                 ClearIsotopePeaks()
 
                 intDataLinesRead = 0
-                Do While srInFile.Peek >= 0
-                    strLineIn = srInFile.ReadLine
+                Do While Not srInFile.EndOfStream
+                    strLineIn = srInFile.ReadLine()
 
                     If Not strLineIn Is Nothing AndAlso strLineIn.Length > 0 Then
                         strSplitLine = strLineIn.Split(cColumnDelimiter)
@@ -1001,9 +991,7 @@ Public Class clsLCMSFeatureFinder
             SetErrorCode(eNewErrorCode, True)
         End If
 
-        If mShowMessages AndAlso blnAllowInformUser Then
-            MessageBox.Show(mStatusMessage & ControlChars.NewLine & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
-        ElseIf blnAllowThrowingException Then
+        If blnAllowThrowingException Then
             Throw New Exception(mStatusMessage, ex)
         End If
     End Sub
@@ -1245,7 +1233,7 @@ Public Class clsLCMSFeatureFinder
                     If Not blnSuccess Or mAbortProcessing Then Exit For
                 Next intIndex
 
-                If intMatchCount = 0 And Me.ShowMessages Then
+                If intMatchCount = 0 Then
                     If mErrorCode = eLCMSFeatureFinderErrorCodes.NoError Then
                         LogErrors("ProcessFileWildcard", "No match was found for the input file path:" & strInputFilePath, Nothing, True, False, False, eLCMSFeatureFinderErrorCodes.InvalidInputFilePath)
                     End If

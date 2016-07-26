@@ -14,7 +14,7 @@ Imports System.IO
 ' Copyright 2007, Battelle Memorial Institute.  All Rights Reserved.
 
 ' E-mail: matthew.monroe@pnl.gov or matt@alchemistmatt.com
-' Website: http://ncrr.pnl.gov/ or http://www.sysbio.org/resources/staff/
+' Website: http://omics.pnl.gov/ or http://www.sysbio.org/resources/staff/ or http://panomics.pnnl.gov/
 ' -------------------------------------------------------------------------------
 ' 
 ' Licensed under the Apache License, Version 2.0; you may not use this file except
@@ -336,7 +336,7 @@ Public Class clsIniFileReader
                 mIniFilePath = String.Copy(strIniFilePath)
 
                 Do While Not srInFile.EndOfStream
-                    strLineIn = srInFile.ReadLine
+                    strLineIn = srInFile.ReadLine()
 
                     If Not strLineIn Is Nothing AndAlso strLineIn.Length > 0 Then
                         strLineIn = strLineIn.Trim
