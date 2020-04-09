@@ -17,18 +17,18 @@ Imports UMCCreation
 ' E-mail: matthew.monroe@pnl.gov or matt@alchemistmatt.com
 ' Website: http://omics.pnl.gov/ or http://www.sysbio.org/resources/staff/ or http://panomics.pnnl.gov/
 ' -------------------------------------------------------------------------------
-' 
+'
 ' Licensed under the Apache License, Version 2.0; you may not use this file except
-' in compliance with the License.  You may obtain a copy of the License at 
+' in compliance with the License.  You may obtain a copy of the License at
 ' http://www.apache.org/licenses/LICENSE-2.0
 '
-' Notice: This computer software was prepared by Battelle Memorial Institute, 
-' hereinafter the Contractor, under Contract No. DE-AC05-76RL0 1830 with the 
-' Department of Energy (DOE).  All rights in the computer software are reserved 
-' by DOE on behalf of the United States Government and the Contractor as 
-' provided in the Contract.  NEITHER THE GOVERNMENT NOR THE CONTRACTOR MAKES ANY 
-' WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LIABILITY FOR THE USE OF THIS 
-' SOFTWARE.  This notice including this sentence must appear on any copies of 
+' Notice: This computer software was prepared by Battelle Memorial Institute,
+' hereinafter the Contractor, under Contract No. DE-AC05-76RL0 1830 with the
+' Department of Energy (DOE).  All rights in the computer software are reserved
+' by DOE on behalf of the United States Government and the Contractor as
+' provided in the Contract.  NEITHER THE GOVERNMENT NOR THE CONTRACTOR MAKES ANY
+' WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LIABILITY FOR THE USE OF THIS
+' SOFTWARE.  This notice including this sentence must appear on any copies of
 ' this computer software.
 
 Public Class clsLCMSFeatureFinder
@@ -260,43 +260,52 @@ Public Class clsLCMSFeatureFinder
             strInputFolderPath = GetParentFolderPathForFile(strInputFilePath)
             strIniFilePath = Path.Combine(strInputFolderPath, Path.GetFileNameWithoutExtension(strInputFilePath) & ".ini")
 
-            If File.Exists(strIniFilePath) Then
-                ' Read the file
-                objIniFileReader = New clsIniFileReader(strIniFilePath)
-
-                If objIniFileReader.DataLoaded Then
-                    With mFeatureFindingOptions
-                        .MonoMassWeight = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "MonoMassWeight", .MonoMassWeight)
-                        .MonoMassConstraint = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "MonoMassConstraint", .MonoMassConstraint)
-                        .MonoMassConstraintIsPPM = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "MonoMassConstraintIsPPM", .MonoMassConstraintIsPPM)
-
-                        .AvgMassWeight = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "AvgMassWeight", .AvgMassWeight)
-                        .AvgMassConstraint = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "AvgMassConstraint", .AvgMassConstraint)
-                        .AvgMassConstraintIsPPM = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "AvgMassConstraintIsPPM", .AvgMassConstraintIsPPM)
-
-                        .LogAbundanceWeight = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "LogAbundanceWeight", .LogAbundanceWeight)
-                        .ScanWeight = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "ScanWeight", .ScanWeight)
-                        .NETWeight = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "NETWeight", .NETWeight)
-                        .FitWeight = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "FitWeight", .FitWeight)
-                        .IMSDriftTimeWeight = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "IMSDriftTimeWeight", .IMSDriftTimeWeight)
-
-                        .MaxDistance = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "MaxDistance", .MaxDistance)
-                        .UseGenericNET = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "UseGenericNET", .UseGenericNET)
-
-                        .MinScan = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "MinScan", .MinScan)
-                        .MaxScan = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "MaxScan", .MaxScan)
-
-                        .MinScan = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "LCMinScan", .MinScan)
-                        .MaxScan = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "LCMaxScan", .MaxScan)
-
-                        .MinFeatureLengthPoints = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "MinFeatureLengthPoints", .MinFeatureLengthPoints)
-
-                        .RequireMatchingChargeState = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "RequireMatchingChargeState", .RequireMatchingChargeState)
-                        .RequireMatchingChargeState = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "UseCharge", .RequireMatchingChargeState)
-                    End With
-                End If
-
+            If Not File.Exists(strIniFilePath) Then
+                Console.WriteLine("Settings file not found (" & strIniFilePath & "); using defaults")
+                Return
             End If
+
+            Console.WriteLine("Reading settings from " & strIniFilePath)
+
+            ' Read the file
+            objIniFileReader = New clsIniFileReader(strIniFilePath)
+
+            If Not objIniFileReader.DataLoaded Then
+                Console.WriteLine("Settings were not loaded from the settings file (" & strIniFilePath & "); likely an invalid format")
+                Return
+            End If
+
+            With mFeatureFindingOptions
+                .MonoMassWeight = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "MonoMassWeight", .MonoMassWeight)
+                .MonoMassConstraint = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "MonoMassConstraint", .MonoMassConstraint)
+                .MonoMassConstraintIsPPM = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "MonoMassConstraintIsPPM", .MonoMassConstraintIsPPM)
+
+                .AvgMassWeight = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "AvgMassWeight", .AvgMassWeight)
+                .AvgMassConstraint = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "AvgMassConstraint", .AvgMassConstraint)
+                .AvgMassConstraintIsPPM = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "AvgMassConstraintIsPPM", .AvgMassConstraintIsPPM)
+
+                .LogAbundanceWeight = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "LogAbundanceWeight", .LogAbundanceWeight)
+                .ScanWeight = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "ScanWeight", .ScanWeight)
+                .NETWeight = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "NETWeight", .NETWeight)
+                .FitWeight = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "FitWeight", .FitWeight)
+                .IMSDriftTimeWeight = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "IMSDriftTimeWeight", .IMSDriftTimeWeight)
+
+                .MaxDistance = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "MaxDistance", .MaxDistance)
+                .UseGenericNET = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "UseGenericNET", .UseGenericNET)
+
+                .MinScan = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "MinScan", .MinScan)
+                .MaxScan = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "MaxScan", .MaxScan)
+
+                .MinScan = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "LCMinScan", .MinScan)
+                .MaxScan = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "LCMaxScan", .MaxScan)
+
+                .MinFeatureLengthPoints = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "MinFeatureLengthPoints", .MinFeatureLengthPoints)
+
+                .RequireMatchingChargeState = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "RequireMatchingChargeState", .RequireMatchingChargeState)
+                .RequireMatchingChargeState = objIniFileReader.GetSetting(INI_SECTION_UMC_CREATION_OPTIONS, "UseCharge", .RequireMatchingChargeState)
+            End With
+
+
         Catch ex As Exception
             LogErrors("AutoLoadOptions", "Error reading the .Ini file(" & Path.GetFileName(strIniFilePath) & ")", ex, False, False, True, eLCMSFeatureFinderErrorCodes.InputFileReadError)
         End Try
@@ -436,7 +445,7 @@ Public Class clsLCMSFeatureFinder
 
         Catch ex As Exception
             LogErrors("FindLCMSFeatures", "Error reading the input data file (" & Path.GetFileName(strInputFilePath) & ")", ex, False, False, True, eLCMSFeatureFinderErrorCodes.InputFileReadError)
-            Return False      
+            Return False
         End Try
 
         Try
@@ -1084,7 +1093,7 @@ Public Class clsLCMSFeatureFinder
         ' strInputFilePath should specify a text file with LC-MS data
         ' strFeaturesOutputFilePath should specify the file in which to write the LC-MS features; note that the FeatureToPeakMapFilePath will be auto-defined based on strFeaturesOutputFilePath
         ' strFeaturesOutputFilePath will be auto-defined if blank
-        ' 
+        '
         ' This function returns True if successful, false if an error
 
         ' This function will look for a .Ini file with the same name as strInputFilePath but ending in .ini
