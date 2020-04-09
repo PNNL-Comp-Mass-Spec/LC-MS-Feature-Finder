@@ -16,18 +16,18 @@ Imports System.Threading
 ' E-mail: matthew.monroe@pnl.gov or matt@alchemistmatt.com
 ' Website: http://omics.pnl.gov/ or http://www.sysbio.org/resources/staff/ or http://panomics.pnnl.gov/
 ' -------------------------------------------------------------------------------
-' 
+'
 ' Licensed under the Apache License, Version 2.0; you may not use this file except
-' in compliance with the License.  You may obtain a copy of the License at 
+' in compliance with the License.  You may obtain a copy of the License at
 ' http://www.apache.org/licenses/LICENSE-2.0
 '
-' Notice: This computer software was prepared by Battelle Memorial Institute, 
-' hereinafter the Contractor, under Contract No. DE-AC05-76RL0 1830 with the 
-' Department of Energy (DOE).  All rights in the computer software are reserved 
-' by DOE on behalf of the United States Government and the Contractor as 
-' provided in the Contract.  NEITHER THE GOVERNMENT NOR THE CONTRACTOR MAKES ANY 
-' WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LIABILITY FOR THE USE OF THIS 
-' SOFTWARE.  This notice including this sentence must appear on any copies of 
+' Notice: This computer software was prepared by Battelle Memorial Institute,
+' hereinafter the Contractor, under Contract No. DE-AC05-76RL0 1830 with the
+' Department of Energy (DOE).  All rights in the computer software are reserved
+' by DOE on behalf of the United States Government and the Contractor as
+' provided in the Contract.  NEITHER THE GOVERNMENT NOR THE CONTRACTOR MAKES ANY
+' WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LIABILITY FOR THE USE OF THIS
+' SOFTWARE.  This notice including this sentence must appear on any copies of
 ' this computer software.
 
 Module modMain
@@ -36,7 +36,7 @@ Module modMain
 
     Private mInputDataFilePath As String
     Private mOutputFileOrFolderPath As String
-    
+
     Private mParameterFilePath As String            ' Optional
 
     Private mShowExampleIni As Boolean
@@ -66,7 +66,7 @@ Module modMain
 
             If mShowExampleIni Then
                 ShowExampleIniFile()
-                return 0
+                Return 0
             End If
 
             If Not blnProceed OrElse
@@ -90,7 +90,7 @@ Module modMain
                     intReturnCode = 0
                 Else
                     intReturnCode = objLCMSFeatureFinder.ErrorCode
-                    If intReturnCode =0 Then
+                    If intReturnCode = 0 Then
                         ShowErrorMessage("Unknown error while processing; error code: " & objLCMSFeatureFinder.ErrorCode)
                     Else
                         ShowErrorMessage("Error while processing: " & objLCMSFeatureFinder.GetErrorMessage())
@@ -100,7 +100,7 @@ Module modMain
                 End If
 
             End If
-            
+
         Catch ex As Exception
             ShowErrorMessage("Error occurred in modMain->Main: " & Environment.NewLine & ex.Message)
             intReturnCode = -1
@@ -113,7 +113,7 @@ Module modMain
     Private Function SetOptionsUsingCommandLineParameters(objParseCommandLine As clsParseCommandLine) As Boolean
         ' Returns True if no problems; otherwise, returns false
 
-		Dim strValue As String = String.Empty
+        Dim strValue As String = String.Empty
         Dim strValidParameters = New String() {"I", "O", "P", "ShowIni"}
 
         Try
@@ -242,8 +242,8 @@ Module modMain
                 swErrorStream.WriteLine(strErrorMessage)
             End Using
         Catch ex As Exception
-			' Ignore errors here
-		End Try
-	End Sub
+            ' Ignore errors here
+        End Try
+    End Sub
 
 End Module
