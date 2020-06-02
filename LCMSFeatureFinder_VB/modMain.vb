@@ -32,7 +32,7 @@ Imports System.Threading
 
 Module modMain
 
-    Public Const PROGRAM_DATE As String = "April 8, 2020"
+    Public Const PROGRAM_DATE As String = "June 2, 2020"
 
     Private mInputDataFilePath As String
     Private mOutputFileOrFolderPath As String
