@@ -13,8 +13,8 @@ Imports System.Threading
 ' Program started January 30, 2007
 ' Copyright 2007, Battelle Memorial Institute.  All Rights Reserved.
 
-' E-mail: matthew.monroe@pnl.gov or matt@alchemistmatt.com
-' Website: http://omics.pnl.gov/ or http://www.sysbio.org/resources/staff/ or http://panomics.pnnl.gov/
+' E-mail: matthew.monroe@pnl.gov or proteomics@pnnl.gov
+' Website: https://github.com/PNNL-Comp-Mass-Spec/ or https://www.pnnl.gov/integrative-omics
 ' -------------------------------------------------------------------------------
 '
 ' Licensed under the Apache License, Version 2.0; you may not use this file except
@@ -225,8 +225,8 @@ Module modMain
             Console.WriteLine("Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2007")
             Console.WriteLine("Copyright 2007, Battelle Memorial Institute.  All Rights Reserved.")
             Console.WriteLine()
-            Console.WriteLine("E-mail: matthew.monroe@pnl.gov or matt@alchemistmatt.com")
-            Console.WriteLine("Website: http://omics.pnl.gov/ or http://panomics.pnnl.gov/")
+            Console.WriteLine("E-mail: matthew.monroe@pnl.gov or proteomics@pnnl.gov")
+            Console.WriteLine("Website: https://github.com/PNNL-Comp-Mass-Spec/ or https://www.pnnl.gov/integrative-omics")
 
             Thread.Sleep(750)
 
