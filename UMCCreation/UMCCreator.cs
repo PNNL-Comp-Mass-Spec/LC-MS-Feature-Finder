@@ -59,7 +59,7 @@ namespace UMCCreation
         public int mint_ims_min_scan;
         public int mint_ims_max_scan;
 
-        //public std::multimap<int, int> mmultimap_umc_2_peak_index ;
+        //public std::multimap<int, int> mmultimap_umc_2_peak_index;
         public readonly SortedDictionary<int, List<int>> mmultimap_umc_2_peak_index = new SortedDictionary<int, List<int>>();
         public readonly List<IsotopePeak> mvect_isotope_peaks = new List<IsotopePeak>();
         public readonly List<int> mvect_umc_num_members = new List<int>();
@@ -679,7 +679,7 @@ namespace UMCCreation
                     else
                     {
                         //int numRead = fscanf(fp, "%hd\t%lg\t%g\t%g\t%g\t%g\t%g", &charge, &abundance, &mz, &fit,
-                        //    &averageMass, &monoMass, &maxMass) ;
+                        //    &averageMass, &monoMass, &maxMass);
                         var tokens = buffer.Split('\t');
                         if (buffer.Trim().StartsWith(stopTag) || !char.IsDigit(buffer.Trim()[0]) || tokens.Length == 0)
                         {
@@ -1248,10 +1248,10 @@ namespace UMCCreation
             //to the indices on the umcs
             fstream fs("mmultimap_umc_2_peak_index", ios::out);
 
-            for (std::multimap<int,int>::iterator iter = mmultimap_umc_2_peak_index.begin() ; iter != mmultimap_umc_2_peak_index.end() ; )
+            for (std::multimap<int,int>::iterator iter = mmultimap_umc_2_peak_index.begin(); iter != mmultimap_umc_2_peak_index.end(); )
             {
 
-                int umc_index = (*iter).first ;
+                int umc_index = (*iter).first;
                 int peak_index = (*iter).second;
                 fs << umc_index << "\t" << peak_index <<std::endl;
             }

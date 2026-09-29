@@ -7,34 +7,34 @@ namespace UMCCreation
 	/// </summary>
 	public class clsPair : IComparable
 	{
-		public int mint_key ;
-		public object mobj_val ;
+		public int mint_key;
+		public object mobj_val;
 
 		public clsPair()
 		{
-			mint_key = 0 ;
-			mobj_val = null ;
+			mint_key = 0;
+			mobj_val = null;
 		}
 
 		public clsPair(int key, object val)
 		{
-			mint_key = key ;
-			mobj_val = val ;
+			mint_key = key;
+			mobj_val = val;
 		}
 
 		public void Set(int key, object val)
 		{
-			mint_key = key ;
-			mobj_val = val ;
+			mint_key = key;
+			mobj_val = val;
 		}
 
 		#region IComparable Members
 
 		public int CompareTo(object obj)
 		{
-			var pt = (clsPair) obj ;
+			var pt = (clsPair) obj;
 			// TODO:  Add clsPair.CompareTo implementation
-			return mint_key.CompareTo(pt.mint_key) ;
+			return mint_key.CompareTo(pt.mint_key);
 		}
 
 		#endregion
