@@ -59,7 +59,7 @@ namespace UMCCreation
         public int mint_ims_min_scan;
         public int mint_ims_max_scan;
 
-        //public std::multimap<int, int> mmultimap_umc_2_peak_index ; 
+        //public std::multimap<int, int> mmultimap_umc_2_peak_index ;
         public readonly SortedDictionary<int, List<int>> mmultimap_umc_2_peak_index = new SortedDictionary<int, List<int>>();
         public readonly List<IsotopePeak> mvect_isotope_peaks = new List<IsotopePeak>();
         public readonly List<int> mvect_umc_num_members = new List<int>();
@@ -75,7 +75,7 @@ namespace UMCCreation
             mflt_wt_ims_drift_time = 0.1F;
 
             mflt_constraint_mono_mass = 10.0F; // is in ppm
-            mflt_constraint_average_mass = 10.0F; // is in ppm. 
+            mflt_constraint_average_mass = 10.0F; // is in ppm.
             mdbl_max_distance = 0.1;
 
             mbln_use_net = true;
@@ -181,7 +181,7 @@ namespace UMCCreation
 
                 var file_len = stream.BaseStream.Length;
 
-                //columns for IMS data 
+                //columns for IMS data
                 //'frame_num,ims_scan_num,charge,abundance,mz,fit,average_mw,monoisotopic_mw,mostabundant_mw,fwhm,signal_noise,mono_abundance,mono_plus2_abundance,orig_intensity,TIA_orig_intensity, drift_time,cumulative_drift_time\n'
 
                 //columns for LC-MS data
@@ -509,7 +509,7 @@ namespace UMCCreation
                             mflt_wt_ims_drift_time = 0.1F;
 
                             mflt_constraint_mono_mass = 25.0F; // is in ppm
-                            mflt_constraint_average_mass = 25.0F; // is in ppm. 
+                            mflt_constraint_average_mass = 25.0F; // is in ppm.
 
                             mbln_use_net = true;
                             mbln_constraint_mono_mass_is_ppm = true;
@@ -667,7 +667,7 @@ namespace UMCCreation
                             pk.mshort_charge = 0;
                             pk.mflt_ims_drift_time = 0;
 
-                            // found file name. start at the end. 
+                            // found file name. start at the end.
                             int index = buffer.LastIndexOf('.') + 1;
                             pk.mint_lc_scan = int.Parse(buffer.Substring(index).Trim());
                             if (pk.mint_lc_scan > mint_lc_max_scan)
@@ -678,8 +678,8 @@ namespace UMCCreation
                     }
                     else
                     {
-                        //int numRead = fscanf(fp, "%hd\t%lg\t%g\t%g\t%g\t%g\t%g", &charge, &abundance, &mz, &fit, 
-                        //    &averageMass, &monoMass, &maxMass) ; 
+                        //int numRead = fscanf(fp, "%hd\t%lg\t%g\t%g\t%g\t%g\t%g", &charge, &abundance, &mz, &fit,
+                        //    &averageMass, &monoMass, &maxMass) ;
                         var tokens = buffer.Split('\t');
                         if (buffer.Trim().StartsWith(stopTag) || !char.IsDigit(buffer.Trim()[0]) || tokens.Length == 0)
                         {
@@ -761,7 +761,7 @@ namespace UMCCreation
             vectTempPeaks.Sort(); // use the item comparator (currently causes a stable sort); probably faster in release mode than OrderBy.
 
             // now we are sorted. Start with the first index and move rightwards.
-            // For each index, 
+            // For each index,
             // 1. If it already belongs to a UMC, move right comparing to all umcs in mass tolerance. For each match
             //        a. If match is not in a UMC, calculate distance. If within tolerance add it to current umc.
             //        b. If match is in the same UMC skip.
@@ -847,7 +847,7 @@ namespace UMCCreation
                 currentIndex++;
             }
 
-            // At the end of all of this. The mapping from mmultimap_umc_2_peak_index is from umc_index to index in sorted stuff. 
+            // At the end of all of this. The mapping from mmultimap_umc_2_peak_index is from umc_index to index in sorted stuff.
             // Also, several of the umc indices are no longer valid. So lets step through the map, get new umc indices, renumber them,
             // and set the umc indices in the original vectors.
             numUmcsSoFar = 0;
@@ -863,14 +863,14 @@ namespace UMCCreation
                 mvect_umc_num_members.Add(numMembers);
                 numUmcsSoFar++;
             }
-            // now set the map object. 
+            // now set the map object.
             mmultimap_umc_2_peak_index.Clear();
             for (var pkNum = 0; pkNum < numPeaks; pkNum++)
             {
                 var pk = mvect_isotope_peaks[pkNum];
                 AddUMCToMap(pk.mint_umc_index, pkNum);
             }
-            // DONE!! 
+            // DONE!!
         }
 
         // Will map be affected by chunking?
@@ -893,7 +893,7 @@ namespace UMCCreation
             return true;
         }
 
-        //method can be called with either stdout or an output file to write to 
+        //method can be called with either stdout or an output file to write to
         public bool PrintUMCs(StreamWriter stream, bool print_members, int featureStartIndex)
         {
             var success = true;
@@ -969,7 +969,7 @@ namespace UMCCreation
                         Console.Write("\t{0:F4}\t{1}\t{2:F0}", pk.mdbl_mono_mass, pk.mint_lc_scan,
                             pk.mdbl_abundance);
                     }
-                }                
+                }
                 Console.WriteLine();
             }
         }
@@ -1055,7 +1055,7 @@ namespace UMCCreation
         }*/
 
         //could all start going into a single branch but have kept it such so that it's a little easier to read.
-        //Method to determine whether the filter 
+        //Method to determine whether the filter
         public bool ConsiderPeak(IsotopePeak peak)
         {
             return (peak.mdbl_abundance >= mint_min_intensity && peak.mflt_fit <= mflt_isotopic_fit_filter) &&
@@ -1159,7 +1159,7 @@ namespace UMCCreation
 
         public void RemoveShortUMCs(int min_length)
         {
-            // first reset all isotope peak umc indices to -1. 
+            // first reset all isotope peak umc indices to -1.
             var numIsotopePeaks = mvect_isotope_peaks.Count;
             for (var peakNum = 0; peakNum < numIsotopePeaks; peakNum++)
             {
@@ -1190,7 +1190,7 @@ namespace UMCCreation
                 }
             }
             mvect_umc_num_members.RemoveRange(numUmcsSoFar, mvect_umc_num_members.Count - numUmcsSoFar);
-            // now set the map object. 
+            // now set the map object.
             mmultimap_umc_2_peak_index.Clear();
             for (var pkNum = 0; pkNum < numIsotopePeaks; pkNum++)
             {
@@ -1200,7 +1200,7 @@ namespace UMCCreation
                     AddUMCToMap(pk.mint_umc_index, pkNum);
                 }
             }
-            // DONE!! 
+            // DONE!!
         }
 
         /* // Block of never used code
@@ -1215,53 +1215,53 @@ namespace UMCCreation
         public void SerializeObjects()
         {
             //First write out all loaded isotopic peaks
-            //we should be smarter about this file writing since there's going to be sufficient 
+            //we should be smarter about this file writing since there's going to be sufficient
             //number of peaks that don't get used into any UMC or get removed as part of short UMCs
             //maybe each peak needs to have a bit whether to used or not
             ofstream ofs("mvect_isotope_peaks.ros", ios::binary);
-    
+
             //this should write only peaks that are being used to the file
             int count = 0;
             for ( int i = 0; i < mvect_isotope_peaks.size(); i++){
-    
+
                 IsotopePeak pk = (IsotopePeak ) mvect_isotope_peaks[i];
                 if ( pk.mint_umc_index != -1){
                        ofs.write( (char*)&mvect_isotope_peaks[i], sizeof(IsotopePeak));
                     count++;
                 }
             }
-    
+
             std::cout<<"Number of peaks written to file is " << count << " while total = " << mvect_isotope_peaks.size() << std::endl;
-    
+
             ofs.close();
-    
+
             //write out the umc classes
             ofstream ofs1("mvect_umcs", ios::binary);
             for ( int  i=0; i < mvect_umcs.size(); i++){
                 ofs1.write( (char*)&mvect_umcs[i], sizeof(UMC));
             }
-    
+
             ofs1.close();
-    
-    
+
+
             //write out the multimap that maps the indices on the isotopic peaks
             //to the indices on the umcs
             fstream fs("mmultimap_umc_2_peak_index", ios::out);
-                
+
             for (std::multimap<int,int>::iterator iter = mmultimap_umc_2_peak_index.begin() ; iter != mmultimap_umc_2_peak_index.end() ; )
             {
-                    
-                int umc_index = (*iter).first ; 
+
+                int umc_index = (*iter).first ;
                 int peak_index = (*iter).second;
                 fs << umc_index << "\t" << peak_index <<std::endl;
             }
-    
+
             fs.close();
         }
 
         public void DeserializeObjects()
         {
-        
+
         }*/
 
 

@@ -4,8 +4,8 @@ Imports System.IO
 Imports System.Reflection
 Imports System.Runtime.InteropServices
 Imports System.Threading
-Imports System.Windows.Forms
 Imports UMCCreation
+
 ' This class reads a text file with mass and intensity data for MS spectra
 ' and determines the LC-MS features present using UMCCreation.dll
 '
